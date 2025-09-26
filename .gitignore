@@ -135,6 +135,18 @@ media/uploads/
 media/profile_pictures/
 media/payment_proofs/
 
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.mkv
+*.m4v
+*.3gp
+*.ogv
+
 # IDE specific
 .vscode/
 .idea/
