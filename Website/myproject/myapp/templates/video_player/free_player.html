@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .plyr {
+        --plyr-color-main: #ffc107;
+        --plyr-video-control-color: #fff;
+        --plyr-video-control-color-hover: #ffc107;
+    }
+    
+    .video-watermark {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        pointer-events: none;
+        z-index: 10;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        user-select: none;
+    }
+    
+    .video-watermark.top-left {
+        top: 10%;
+        left: 5%;
+    }
+    
+    .video-watermark.top-right {
+        top: 10%;
+        right: 5%;
+    }
+    
+    .video-watermark.bottom-left {
+        bottom: 15%;
+        left: 5%;
+    }
+    
+    .video-watermark.bottom-right {
+        bottom: 15%;
+        right: 5%;
+    }
+    
+    .video-info {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a202c;
+    }
+    
+    .video-description {
+        color: #4a5568;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    
+    .nav-button {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(45deg, #ffc107, #ff9800);
+        color: #212529;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+        color: #212529;
+    }
+    
+    .nav-button.disabled {
+        background: #e9ecef;
+        color: #adb5bd;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    
+    .nav-button.disabled:hover {
+        transform: none;
+    }
+    
+    .nav-button i {
+        margin-right: 8px;
+    }
+    
+    .nav-button.next i {
+        margin-right: 0;
+        margin-left: 8px;
+    }
+    
+    /* Responsive video container */
+    @media (max-width: 768px) {
+        .video-container {
+            border-radius: 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-4">
+    <div class="video-container">
+        <div id="watermark" class="video-watermark"></div>
+        <div id="error-message" class="alert alert-error alert-dismissible fade show" role="alert" style="display: none;">
+            An error occurred while loading the video.
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+        <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; z-index: 5;">
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Using Plyr for free videos instead of iframe -->
+        <video id="free-player" playsinline controls data-poster="{{ thumbnail_url }}">
+            <source src="{{ streaming_url }}" type="video/mp4" />
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-description">{{ video.description|linebreaks }}</div>
+        <div class="video-meta">
+            <span>Duration: {{ video.duration }}</span>
+        </div>
+        
+        <div class="navigation-buttons">
+            {% if previous_video %}
+                <a href="{% url 'free_video_player' previous_video.id %}" class="nav-button prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </a>
+            {% else %}
+                <span class="nav-button disabled prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </span>
+            {% endif %}
+            
+            <a href="{% url 'free_course' %}" class="nav-button">
+                <i class="fas fa-th-list"></i> All Free Videos
+            </a>
+            
+            {% if next_video %}
+                <a href="{% url 'free_video_player' next_video.id %}" class="nav-button next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <span class="nav-button disabled next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+    // Set up variables from Django context
+    const videoStreamingUrl = "{{ streaming_url|escapejs }}";
+    const watermarkText = "{{ watermark_data.text|escapejs }}";
+    const watermarkPosition = "{{ watermark_data.position|default:'random'|escapejs }}";
+    const watermarkOpacity = "{{ watermark_data.opacity|default:'0.7'|escapejs }}";
+    const videoId = "{{ video.id }}";
+    
+    // Initialize Plyr
+    const player = new Plyr('#free-player', {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+        autoplay: false
+    });
+    
+    // Handle video loading
+    player.on('ready', event => {
+        hideLoadingIndicator();
+    });
+    
+    player.on('error', event => {
+        handleVideoError();
+    });
+    
+    // Simple debug logging
+    console.log('Free video player initialized with URL:', videoStreamingUrl);
+    
+    // Handle video loading error
+    function handleVideoError() {
+        document.getElementById('error-message').style.display = 'block';
+        console.error('Error loading video from URL:', videoStreamingUrl);
+    }
+    
+    function hideErrorMessage() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+    
+    function hideLoadingIndicator() {
+        document.getElementById('loading-indicator').style.display = 'none';
+        // Also hide error message if video loaded successfully
+        hideErrorMessage();
+    }
+    
+    // Set up watermark
+    const watermarkElement = document.getElementById('watermark');
+    const watermarkPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+    let currentPosition = 0;
+    
+    function updateWatermarkPosition() {
+        // Remove all position classes
+        watermarkPositions.forEach(pos => {
+            watermarkElement.classList.remove(pos);
+        });
+        
+        // Set position based on watermark data or randomly
+        if (watermarkPosition === 'random') {
+            // Change position every 10-30 seconds
+            currentPosition = (currentPosition + 1) % watermarkPositions.length;
+            watermarkElement.classList.add(watermarkPositions[currentPosition]);
+        } else {
+            watermarkElement.classList.add(watermarkPosition);
+        }
+        
+        watermarkElement.textContent = watermarkText;
+        watermarkElement.style.opacity = watermarkOpacity;
+    }
+    
+    // Set initial watermark
+    updateWatermarkPosition();
+    
+    // Update watermark position periodically
+    setInterval(updateWatermarkPosition, Math.floor(Math.random() * 20000) + 10000);
+</script>
+{% endblock %}

@@ -1,0 +1,471 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}MEGA Video Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Video Card Styles */
+    .video-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .video-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .video-thumbnail {
+        position: relative;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+
+    .video-thumbnail img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+
+    .video-card:hover .video-thumbnail img {
+        transform: scale(1.05);
+    }
+
+    .video-duration {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .video-info {
+        padding: 1rem;
+    }
+
+    .video-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+        line-height: 1.4;
+    }
+
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .tier-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .tier-regular { 
+        background-color: #e9ecef;
+        color: #495057;
+    }
+
+    .tier-vip { 
+        background: linear-gradient(45deg, #ffd700, #ffa500);
+        color: #000;
+    }
+
+    .tier-diamond { 
+        background: linear-gradient(45deg, #b2f5ea, #81e6d9);
+        color: #234e52;
+    }
+
+    .watch-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: #007bff;
+        color: white;
+        border-radius: 20px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .watch-btn:hover {
+        background: #0056b3;
+        color: white;
+        text-decoration: none;
+    }
+
+    .watch-btn i {
+        margin-right: 6px;
+    }
+
+    .video-progress-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .video-progress {
+        height: 100%;
+        background: #007bff;
+        transition: width 0.3s;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .video-card {
+            margin-bottom: 1rem;
+        }
+        .video-title {
+            font-size: 1rem;
+        }
+    }
+
+    .video-thumbnail {
+        width: 120px;
+        height: 68px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .video-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .video-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .alert-dismissible .btn-close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.75rem 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Add CSRF Token -->
+{% csrf_token %}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">MEGA Video Management</h1>
+        <a href="{% url 'add_mega_video' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add New MEGA Video
+        </a>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Total Videos Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Videos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ videos.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-video fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regular Videos Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Regular Videos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ regular_videos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-video fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIP Videos Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                VIP Videos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ vip_videos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-video fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diamond Videos Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Diamond Videos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ diamond_videos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-video fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Videos Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">MEGA Videos</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                    aria-labelledby="dropdownMenuLink">
+                    <div class="dropdown-header">Video Actions:</div>
+                    <a class="dropdown-item" href="{% url 'add_mega_video' %}">Add New Video</a>
+                    <a class="dropdown-item" href="#">Sync All Videos</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#">View Analytics</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'success' %}success{% else %}danger{% endif %} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%">Video</th>
+                            <th>Membership Tier</th>
+                            <th>Created</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in videos %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if video.thumbnail_url %}
+                                            <img src="{{ video.thumbnail_url }}" class="video-thumbnail" alt="{{ video.title }}">
+                                        {% else %}
+                                            <div class="video-thumbnail bg-secondary d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-video text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="video-title">{{ video.title }}</div>
+                                        <div class="video-meta">{{ video.description|truncatechars:60 }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if video.is_free %}
+                                <span class="badge bg-primary">
+                                    Free
+                                </span>
+                                {% else %}
+                                <span class="badge {% if video.membership_tier == 'regular' %}bg-success{% elif video.membership_tier == 'vip' %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ video.get_membership_tier_display }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ video.created_at|date:"M d, Y" }}</td>
+                            <td>{{ video.duration }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'edit_mega_video' video.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'play_mega_video' video.id %}" class="btn btn-sm btn-outline-success" target="_blank">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ video.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <p class="text-muted mb-0">No MEGA videos found. Add your first video to get started.</p>
+                                <a href="{% url 'add_mega_video' %}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-plus"></i> Add MEGA Video
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Initialize DataTables
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "order": [[2, "desc"]], // Sort by created date by default
+            "language": {
+                "emptyTable": "No MEGA videos found"
+            }
+        });
+    });
+    
+    // Get CSRF token
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    // Show alert message
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Find the container where we want to show the alert
+        const container = document.querySelector('.container-fluid');
+        const firstChild = container.firstChild;
+        container.insertBefore(alertDiv, firstChild);
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Confirm video deletion
+    function confirmDelete(videoId) {
+        if (confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+            fetch(`/api/mega-videos/${videoId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Network response was not ok');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Show success message
+                    showAlert(data.message || 'Video deleted successfully');
+                    
+                    // Remove the row from the table
+                    const row = document.querySelector(`button[onclick="confirmDelete('${videoId}')"]`).closest('tr');
+                    row.remove();
+                    
+                    // Update all video counts
+                    updateVideoCounts(-1);
+                } else {
+                    showAlert(data.error || 'Unknown error occurred', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert(error.message || 'Error deleting video', 'danger');
+            });
+        }
+    }
+
+    // Update video counts
+    function updateVideoCounts(change) {
+        // Update total videos
+        const totalElement = document.querySelector('.text-primary + .h5');
+        if (totalElement) {
+            const currentTotal = parseInt(totalElement.textContent) || 0;
+            totalElement.textContent = Math.max(0, currentTotal + change);
+        }
+
+        // Update the count in the video type card that matches the deleted video's type
+        const videoRow = document.querySelector(`button[onclick="confirmDelete('${videoId}')"]`).closest('tr');
+        const membershipType = videoRow.querySelector('.badge').textContent.trim().toLowerCase();
+        
+        let counterSelector;
+        if (membershipType.includes('regular')) {
+            counterSelector = '.text-success + .h5';
+        } else if (membershipType.includes('vip')) {
+            counterSelector = '.text-info + .h5';
+        } else if (membershipType.includes('diamond')) {
+            counterSelector = '.text-warning + .h5';
+        }
+
+        if (counterSelector) {
+            const typeElement = document.querySelector(counterSelector);
+            if (typeElement) {
+                const currentCount = parseInt(typeElement.textContent) || 0;
+                typeElement.textContent = Math.max(0, currentCount + change);
+            }
+        }
+    }
+</script>
+{% endblock %}

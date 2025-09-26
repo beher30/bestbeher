@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <style>
+        body {
+            background: url('{% static "img/landing/header_bg.jpg" %}') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .thankyou-container {
+            max-width: 500px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="thankyou-container">
+        <h2 class="text-center">Thank You!</h2>
+        <p>መክፈላችሁን ኣረጋግጠን የቪድዮዎችን <span style="color: blue;">Link</span>  በEmail እንልክላቹዋለን።<br> ኢሜላችሁን check ኣርጉ።</p>
+        <a href="index.html" class="btn btn-primary btn-block" style="font-size: large;">Go to Home</a>
+    </div>
+
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+
+</html>

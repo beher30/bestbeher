@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Video Player</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .plyr {
+            --plyr-color-main: #5a67d8;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .video-watermark {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            user-select: none;
+        }
+        
+        .video-watermark.top-left {
+            top: 10%;
+            left: 5%;
+        }
+        
+        .video-watermark.top-right {
+            top: 10%;
+            right: 5%;
+        }
+        
+        .video-watermark.bottom-left {
+            bottom: 15%;
+            left: 5%;
+        }
+        
+        .video-watermark.bottom-right {
+            bottom: 15%;
+            right: 5%;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div id="watermark" class="video-watermark"></div>
+        <video id="player" playsinline controls>
+            <source src="{{ mega_url }}" type="video/mp4" />
+        </video>
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script>
+        // Prevent right-click
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        // Prevent developer tools shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+            if (
+                e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))
+            ) {
+                e.preventDefault();
+            }
+        });
+        
+        // Initialize Plyr
+        const player = new Plyr('#player', {
+            controls: [
+                'play-large', 'play', 'progress', 'current-time', 'mute', 
+                'volume', 'settings', 'fullscreen'
+            ],
+            hideControls: true,
+            autoplay: false,
+            keyboard: { focused: true, global: false }
+        });
+        
+        // Set up watermark
+        const watermarkElement = document.getElementById('watermark');
+        const watermarkText = "{{ watermark_data.text|escapejs }}";
+        const watermarkPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+        let currentPosition = 0;
+        
+        function updateWatermarkPosition() {
+            // Remove all position classes
+            watermarkPositions.forEach(pos => {
+                watermarkElement.classList.remove(pos);
+            });
+            
+            // Set position based on watermark data or randomly
+            const position = "{{ watermark_data.position|default:'random' }}";
+            
+            if (position === 'random') {
+                // Change position every 10-30 seconds
+                currentPosition = (currentPosition + 1) % watermarkPositions.length;
+                watermarkElement.classList.add(watermarkPositions[currentPosition]);
+            } else {
+                watermarkElement.classList.add(position);
+            }
+            
+            watermarkElement.textContent = watermarkText;
+            watermarkElement.style.opacity = "{{ watermark_data.opacity|default:'0.7' }}";
+        }
+        
+        // Set initial watermark
+        updateWatermarkPosition();
+        
+        // Update watermark position periodically
+        setInterval(updateWatermarkPosition, Math.floor(Math.random() * 20000) + 10000);
+        
+        // Track video progress via postMessage to parent window
+        let lastUpdateTime = 0;
+        const updateInterval = 5000; // Update every 5 seconds
+        
+        player.on('timeupdate', function() {
+            const currentTime = player.currentTime;
+            const duration = player.duration;
+            const now = Date.now();
+            
+            // Only update every 5 seconds to reduce server load
+            if (now - lastUpdateTime > updateInterval) {
+                lastUpdateTime = now;
+                
+                // Send progress to parent window
+                window.parent.postMessage({
+                    type: 'videoProgress',
+                    currentTime: currentTime,
+                    duration: duration,
+                    completed: false,
+                    sessionId: "{{ watermark_data.session_id|default:'' }}"
+                }, '*');
+            }
+        });
+        
+        player.on('ended', function() {
+            // Send completed status to parent window
+            window.parent.postMessage({
+                type: 'videoProgress',
+                currentTime: player.duration,
+                duration: player.duration,
+                completed: true,
+                sessionId: "{{ watermark_data.session_id|default:'' }}"
+            }, '*');
+        });
+        
+        // Listen for messages from parent window
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'seekTo') {
+                player.currentTime = event.data.time;
+            }
+        });
+    </script>
+</body>
+</html>

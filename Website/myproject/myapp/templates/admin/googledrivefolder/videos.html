@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h2>Videos in {{ folder.name }}</h2>
+        <div class="results">
+            <table id="result_list">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for video in videos %}
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        <td>{{ video.title }}</td>
+                        <td>{{ video.duration_ms|default:"Unknown" }}</td>
+                        <td>{{ video.created_at }}</td>
+                        <td>
+                            <a href="{% url 'admin:myapp_googledrivevideo_change' video.id %}" 
+                               class="button">Edit</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No videos found in this folder.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

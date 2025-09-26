@@ -1,0 +1,600 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+    .user-card {
+        background: var(--card-bg, #ffffff);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color, #e9ecef);
+    }
+
+    .user-card:hover {
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .payment-proof-modal .modal-content {
+        border-radius: 15px;
+        border: none;
+    }
+
+    .payment-proof-modal .modal-header {
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+
+    .payment-proof-modal .modal-body {
+        padding: 0 1.5rem 1.5rem;
+        text-align: center;
+    }
+
+    .payment-proof-modal .modal-footer {
+        border-top: none;
+        padding: 1.5rem;
+    }
+
+    .proof-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .proof-image.zoomed {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 90vw;
+        max-height: 90vh;
+        z-index: 1060;
+        cursor: zoom-out;
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        object-fit: contain;
+    }
+
+    .membership-select {
+        background-color: var(--input-bg, #f8f9fa);
+        border: 1px solid var(--border-color, #e9ecef);
+        border-radius: 8px;
+        padding: 0.5rem;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .membership-select:focus {
+        border-color: var(--primary, #0d6efd);
+        outline: none;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .status-badge {
+        padding: 0.5em 1em;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .status-approved {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-rejected {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+
+    .proof-placeholder {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        color: #6c757d;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 1050;
+        display: none;
+    }
+
+    .overlay.active {
+        display: block;
+    }
+
+    .modal-image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    .modal-image {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .user-card {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <form id="csrfForm">
+        {% csrf_token %}
+    </form>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">User Management</h4>
+        <div class="filter-buttons">
+            <button class="btn btn-outline-primary {% if not request.GET.filter %}active{% endif %}" data-filter="all">All Users</button>
+            <button class="btn btn-outline-warning {% if request.GET.filter == 'pending' %}active{% endif %}" data-filter="pending">Pending Proofs</button>
+            <button class="btn btn-outline-success {% if request.GET.filter == 'premium' %}active{% endif %}" data-filter="premium">Premium Users</button>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for user_data in users_data %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="user-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1">{{ user_data.user.username }}</h5>
+                        <p class="text-muted mb-0">{{ user_data.user.email }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Membership Tier</label>
+                    <div class="d-flex gap-2">
+                        <select class="membership-select" data-user-id="{{ user_data.user.id }}" data-original-tier="{{ user_data.profile.membership_tier }}">
+                            <option value="regular" {% if user_data.profile.membership_tier == 'regular' %}selected{% endif %}>Regular</option>
+                            <option value="vip" {% if user_data.profile.membership_tier == 'vip' %}selected{% endif %}>VIP</option>
+                            <option value="diamond" {% if user_data.profile.membership_tier == 'diamond' %}selected{% endif %}>Diamond</option>
+                        </select>
+                        <button class="btn btn-primary save-membership" data-user-id="{{ user_data.user.id }}" style="display: none;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                    <div class="membership-status mt-2" id="membership-status-{{ user_data.user.id }}">
+                        {% if user_data.profile.is_membership_active %}
+                            <span class="badge bg-success">Active until {{ user_data.profile.membership_end_date|date:"M d, Y" }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Latest Proof</label>
+                    {% if user_data.latest_proof %}
+                        <div class="position-relative">
+                            {% if user_data.latest_proof.image %}
+                                <img src="{{ user_data.latest_proof.image.url }}" 
+                                     class="proof-image w-100" 
+                                     alt="Payment Proof"
+                                     data-proof-id="{{ user_data.latest_proof.id }}">
+                            {% else %}
+                                <div class="proof-placeholder">
+                                    <i class="fas fa-image fa-2x mb-2"></i>
+                                    <p class="mb-0">No proof image</p>
+                                </div>
+                            {% endif %}
+                            <div class="status-badge status-{{ user_data.latest_proof.status|lower }} mt-2">
+                                {{ user_data.latest_proof.get_status_display }}
+                            </div>
+                            {% if user_data.latest_proof.status == 'pending' %}
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-success proof-action-btn" data-proof-id="{{ user_data.latest_proof.id }}" data-action="approve">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger proof-action-btn" data-proof-id="{{ user_data.latest_proof.id }}" data-action="reject">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="proof-placeholder">
+                            <i class="fas fa-image fa-2x mb-2"></i>
+                            <p class="mb-0">No proof uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Joined: {{ user_data.user.date_joined|date:"M d, Y" }}
+                    </small>
+                    <div>
+                        <span class="badge bg-info">{{ user_data.pending_proofs }} Pending</span>
+                        <span class="badge bg-success">{{ user_data.approved_proofs }} Approved</span>
+                        <span class="badge bg-danger">{{ user_data.rejected_proofs }} Rejected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewModalLabel">Payment Proof</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img src="" class="modal-image" id="previewImage" alt="Payment Proof">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div id="proofActionButtons" style="display: none;">
+                    <button type="button" class="btn btn-success" id="approveProofBtn">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button type="button" class="btn btn-danger" id="rejectProofBtn">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="overlay"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Configure toastr
+    toastr.options = {
+        "closeButton": true,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "3000"
+    };
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Handle membership tier changes
+    document.querySelectorAll('.membership-select').forEach(select => {
+        // Store the original value when the page loads
+        const originalTier = select.dataset.originalTier;
+        
+        select.addEventListener('change', function() {
+            const saveButton = this.parentElement.querySelector('.save-membership');
+            const newValue = this.value;
+            
+            if (originalTier !== newValue) {
+                saveButton.style.display = 'block';
+                select.style.borderColor = '#ffc107';
+            } else {
+                saveButton.style.display = 'none';
+                select.style.borderColor = '';
+            }
+        });
+    });
+
+    // Handle save membership button clicks
+    document.querySelectorAll('.save-membership').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const select = this.parentElement.querySelector('.membership-select');
+            const newTier = select.value;
+            const originalTier = select.dataset.originalTier;
+            const statusDiv = document.getElementById(`membership-status-${userId}`);
+            const saveBtn = this;
+            
+            // Don't do anything if the tier hasn't changed
+            if (newTier === originalTier) {
+                return;
+            }
+            
+            // Show confirmation dialog
+            const username = this.closest('.user-card').querySelector('h5').textContent;
+            const tierDisplay = {
+                'regular': 'Regular',
+                'vip': 'VIP',
+                'diamond': 'Diamond'
+            };
+            
+            Swal.fire({
+                title: 'Confirm Membership Change',
+                html: `Are you sure you want to change <strong>${username}</strong>'s membership from <strong>${tierDisplay[originalTier]}</strong> to <strong>${tierDisplay[newTier]}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, change it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    updateMembership(userId, newTier, originalTier, statusDiv, saveBtn);
+                }
+            });
+        });
+    });
+    
+    // Function to update membership
+    function updateMembership(userId, newTier, originalTier, statusDiv, saveBtn) {
+        // Disable the button while processing
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        // Make the API call
+        fetch(`/dashboard/users/${userId}/membership/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ membership_tier: newTier })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success message with SweetAlert
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Membership updated successfully',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Update the original tier
+                const select = saveBtn.parentElement.querySelector('.membership-select');
+                select.dataset.originalTier = newTier;
+                
+                // Hide save button
+                saveBtn.style.display = 'none';
+                
+                // Reset select border
+                select.style.borderColor = '';
+                
+                // Update membership status if present
+                if (statusDiv) {
+                    if (data.membership_end_date) {
+                        const formattedDate = new Date(data.membership_end_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        statusDiv.innerHTML = `<span class="badge bg-success">Active until ${formattedDate}</span>`;
+                    } else {
+                        statusDiv.innerHTML = `<span class="badge bg-secondary">Inactive</span>`;
+                    }
+                }
+            } else {
+                // Show error message with SweetAlert
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'Failed to update membership',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonText: 'Retry',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Retry the membership update
+                        updateMembership(userId, newTier, originalTier, statusDiv, saveBtn);
+                        return;
+                    }
+                    
+                    // Revert the select to its original value
+                    const select = saveBtn.parentElement.querySelector('.membership-select');
+                    select.value = originalTier;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show error message with SweetAlert
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'An error occurred while updating membership',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonText: 'Retry',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Retry the membership update
+                    updateMembership(userId, newTier, originalTier, statusDiv, saveBtn);
+                    return;
+                }
+                
+                // Revert the select to its original value
+                const select = saveBtn.parentElement.querySelector('.membership-select');
+                select.value = originalTier;
+            });
+        })
+        .finally(() => {
+            // Re-enable the button
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+        });
+    }
+
+    // Image preview modal
+    const imagePreviewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const previewImage = document.getElementById('previewImage');
+    const modalTitle = document.getElementById('imagePreviewModalLabel');
+    const proofActionButtons = document.getElementById('proofActionButtons');
+    const approveProofBtn = document.getElementById('approveProofBtn');
+    const rejectProofBtn = document.getElementById('rejectProofBtn');
+    let currentProofId = null;
+
+    // Handle proof image clicks
+    document.querySelectorAll('.proof-image').forEach(img => {
+        img.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Get the image source and proof ID
+            const imgSrc = this.src;
+            currentProofId = this.dataset.proofId;
+            const username = this.closest('.user-card').querySelector('h5').textContent;
+            
+            // Set modal content
+            previewImage.src = imgSrc;
+            modalTitle.textContent = `Payment Proof - ${username}`;
+            
+            // Check if this is a pending proof
+            const actionButtons = this.closest('.position-relative').querySelector('.action-buttons');
+            if (actionButtons) {
+                proofActionButtons.style.display = 'block';
+                
+                // Set up action buttons
+                approveProofBtn.onclick = () => handleProofAction(currentProofId, 'approve');
+                rejectProofBtn.onclick = () => handleProofAction(currentProofId, 'reject');
+            } else {
+                proofActionButtons.style.display = 'none';
+            }
+            
+            // Show the modal
+            imagePreviewModal.show();
+        });
+    });
+
+    // Handle proof actions (approve/reject)
+    function handleProofAction(proofId, action) {
+        // Disable buttons while processing
+        approveProofBtn.disabled = true;
+        rejectProofBtn.disabled = true;
+        
+        const actionBtn = action === 'approve' ? approveProofBtn : rejectProofBtn;
+        const originalHtml = actionBtn.innerHTML;
+        actionBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${action === 'approve' ? 'Approving' : 'Rejecting'}...`;
+        
+        fetch(`/dashboard/payment-proofs/${proofId}/${action}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: `Payment proof ${action}ed successfully`,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Hide the modal
+                imagePreviewModal.hide();
+                
+                // Reload the page after a short delay
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || `Failed to ${action} payment proof`,
+                    icon: 'error'
+                });
+                
+                // Reset buttons
+                approveProofBtn.disabled = false;
+                rejectProofBtn.disabled = false;
+                actionBtn.innerHTML = originalHtml;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: `An error occurred while ${action}ing payment proof`,
+                icon: 'error'
+            });
+            
+            // Reset buttons
+            approveProofBtn.disabled = false;
+            rejectProofBtn.disabled = false;
+            actionBtn.innerHTML = originalHtml;
+        });
+    }
+
+    // Handle proof action button clicks in the card
+    document.querySelectorAll('.proof-action-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const proofId = this.dataset.proofId;
+            const action = this.dataset.action;
+            
+            // Show confirmation dialog
+            if (confirm(`Are you sure you want to ${action} this payment proof?`)) {
+                handleProofAction(proofId, action);
+            }
+        });
+    });
+
+    // Filter buttons
+    document.querySelectorAll('.filter-buttons button').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            if (filter === 'all') {
+                window.location.href = '/dashboard/users/';
+            } else {
+                window.location.href = `/dashboard/users/?filter=${filter}`;
+            }
+        });
+    });
+</script>
+{% endblock %}

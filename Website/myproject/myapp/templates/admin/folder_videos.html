@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static 'css/drive_folders.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="folder-videos">
+    <div class="page-header">
+        <h1>{{ folder.name }} - Videos</h1>
+        <div class="action-bar">
+            <a href="{% url 'drive_folder_management' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Folders
+            </a>
+            <button class="btn btn-primary" onclick="syncFolder({{ folder.id }})">
+                <i class="fas fa-sync"></i> Sync Now
+            </button>
+        </div>
+    </div>
+
+    <div class="video-grid">
+        {% for video in videos %}
+        <div class="video-card">
+            <div class="video-thumbnail">
+                {% if video.thumbnail_url %}
+                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}">
+                {% else %}
+                <div class="no-thumbnail">
+                    <i class="fas fa-video"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="video-info">
+                <h3>{{ video.title }}</h3>
+                <div class="video-meta">
+                    <span><i class="fas fa-clock"></i> {{ video.duration|default:"Unknown" }}</span>
+                    <span><i class="fas fa-calendar"></i> {{ video.created_at|date:"M d, Y" }}</span>
+                </div>
+                <p class="video-description">{{ video.description|truncatewords:20 }}</p>
+            </div>
+            <div class="video-actions">
+                <a href="{{ video.drive_file_id }}" target="_blank" class="btn btn-info">
+                    <i class="fas fa-external-link-alt"></i> View
+                </a>
+                <button class="btn btn-danger" onclick="deleteVideo({{ video.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% include "admin/pagination.html" with page_obj=videos %}
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/drive_folders.js' %}"></script>
+{% endblock %} 

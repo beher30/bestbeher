@@ -1,0 +1,403 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.badge.bg-regular {
+    background-color: #6c757d;
+}
+
+.badge.bg-vip {
+    background-color: #ffc107;
+}
+
+.badge.bg-diamond {
+    background-color: #0dcaf0;
+}
+
+.folder-stats {
+    color: #6c757d;
+}
+
+.folder-stats p {
+    margin-bottom: 0.5rem;
+}
+
+.folder-stats i {
+    width: 20px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.fa-spinner.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+.sync-status {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    display: none;
+}
+
+.sync-status.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.sync-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Google Drive Folder Management</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFolderModal">
+            <i class="fas fa-plus"></i> Add New Folder
+        </button>
+    </div>
+
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Folders</h5>
+                    <h2 class="card-text">{{ folders.paginator.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Videos</h5>
+                    <h2 class="card-text">{{ folders|sum:'_video_count' }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Folders Grid -->
+    <div class="row">
+        {% for folder in folders %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ folder.name }}</h5>
+                        <span class="badge bg-{{ folder.membership_tier }}">
+                            {{ folder.get_membership_tier_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="folder-stats mb-3">
+                        <p><i class="fas fa-video"></i> <span class="video-count-{{ folder.id }}">{{ folder._video_count }}</span> videos</p>
+                        <p><i class="fas fa-clock"></i> Last synced: 
+                            <span class="last-synced-{{ folder.id }}">
+                            {% if folder.last_synced %}
+                                {{ folder.last_synced|timesince }} ago
+                            {% else %}
+                                Never
+                            {% endif %}
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="btn-group w-100">
+                        <a href="{% url 'admin_folder_videos' folder.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <button class="btn btn-outline-secondary sync-folder" data-folder-id="{{ folder.id }}">
+                            <i class="fas fa-sync"></i> Sync
+                        </button>
+                        <button class="btn btn-outline-danger delete-folder" data-folder-id="{{ folder.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No folders found. Add a new folder to get started.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if folders.paginator.num_pages > 1 %}
+    <nav aria-label="Folder pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if folders.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ folders.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in folders.paginator.page_range %}
+            <li class="page-item {% if folders.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if folders.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ folders.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Add Folder Modal -->
+<div class="modal fade" id="addFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addFolderForm" method="POST" action="{% url 'add_folder' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="folderName" class="form-label">Folder Name</label>
+                        <input type="text" class="form-control" id="folderName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="folderId" class="form-label">Google Drive Folder ID/URL</label>
+                        <input type="text" class="form-control" id="folderId" name="folder_id" required>
+                        <small class="text-muted">Paste the Google Drive folder URL or ID</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="membershipTier" class="form-label">Membership Tier</label>
+                        <select class="form-select" id="membershipTier" name="membership_tier" required>
+                            <option value="regular">Regular</option>
+                            <option value="vip">VIP</option>
+                            <option value="diamond">Diamond</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addFolderForm" class="btn btn-primary">Add Folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Configure Toastr
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        preventDuplicates: true,
+        onclick: null,
+        showDuration: "300",
+        hideDuration: "1000",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+        showEasing: "swing",
+        hideEasing: "linear",
+        showMethod: "fadeIn",
+        hideMethod: "fadeOut"
+    };
+
+    // Sync folder
+    document.querySelectorAll('.sync-folder').forEach(button => {
+        button.addEventListener('click', async function() {
+            const folderId = this.dataset.folderId;
+            const card = button.closest('.card');
+            const videoCountEl = card.querySelector(`.video-count-${folderId}`);
+            const lastSyncedEl = card.querySelector(`.last-synced-${folderId}`);
+            
+            // Show confirmation dialog
+            if (!confirm('Are you sure you want to sync this folder? This may take a while depending on the number of videos.')) {
+                return;
+            }
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+            
+            // Show initial progress notification
+            const syncingToast = toastr.info(
+                'Starting folder sync...',
+                'Please wait',
+                { timeOut: 0, extendedTimeOut: 0 }
+            );
+
+            try {
+                const response = await fetch(`/dashboard/folders/${folderId}/sync/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'  // Include cookies for authentication
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Remove the "syncing" notification
+                toastr.clear(syncingToast);
+                
+                if (data.status === 'success' || data.status === 'partial_success') {
+                    // Update UI
+                    videoCountEl.textContent = data.videos_count;
+                    lastSyncedEl.textContent = 'just now';
+                    
+                    // Show success message with details
+                    toastr.success(data.message, 'Sync Complete', { timeOut: 10000 });
+                    
+                    // If there are errors, show them in a warning toast
+                    if (data.details.errors && data.details.errors.length > 0) {
+                        const errorList = data.details.errors.join('<br>');
+                        toastr.warning(
+                            `Some errors occurred during sync:<br>${errorList}`,
+                            'Sync Warnings',
+                            { timeOut: 0, extendedTimeOut: 0 }
+                        );
+                    }
+                    
+                    // Show sync duration in info toast
+                    toastr.info(
+                        `Sync completed in ${data.details.sync_duration}`,
+                        'Sync Duration',
+                        { timeOut: 5000 }
+                    );
+                } else {
+                    throw new Error(data.message || 'Error syncing folder');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.clear(syncingToast);
+                toastr.error(
+                    error.message || 'Error syncing folder. Please check the console for details.',
+                    'Sync Error',
+                    { timeOut: 0, extendedTimeOut: 0 }
+                );
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        });
+    });
+
+    // Delete folder
+    document.querySelectorAll('.delete-folder').forEach(button => {
+        button.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete this folder? This action cannot be undone.')) {
+                return;
+            }
+
+            const folderId = this.dataset.folderId;
+            const button = this;
+            const card = button.closest('.card').parentElement;
+            
+            // Disable button
+            button.disabled = true;
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+            try {
+                const response = await fetch(`/dashboard/folders/${folderId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    // Remove the card with animation
+                    card.style.transition = 'opacity 0.3s ease-out';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 300);
+                    
+                    // Show success message
+                    toastr.success(data.message || 'Folder deleted successfully');
+                } else {
+                    // Show error message
+                    toastr.error(data.message || 'Error deleting folder');
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('Error deleting folder. Please try again.');
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        });
+    });
+
+    // Form validation
+    const addFolderForm = document.getElementById('addFolderForm');
+    if (addFolderForm) {
+        addFolderForm.addEventListener('submit', function(e) {
+            const folderIdInput = document.getElementById('folderId');
+            const folderId = folderIdInput.value.trim();
+            
+            if (!folderId) {
+                e.preventDefault();
+                toastr.error('Please enter a folder ID or URL');
+                return;
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

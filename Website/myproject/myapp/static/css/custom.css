@@ -1,0 +1,266 @@
+/* Add here all your CSS customizations */
+
+/* Video accessibility system styles */
+.video-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.video-info {
+    padding: 15px;
+    background-color: #fff;
+}
+
+.video-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.video-description {
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.video-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.locked-video {
+    position: relative;
+}
+
+.locked-video .video-thumbnail {
+    filter: blur(5px);
+}
+
+.locked-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 1;
+}
+
+.lock-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.upgrade-btn {
+    background-color: #f8c200;
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.upgrade-btn:hover {
+    background-color: #e0b000;
+    transform: scale(1.05);
+}
+
+.completed-video .video-thumbnail::after {
+    content: "✓";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 25px;
+    height: 25px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+/* Video player page styles */
+.video-player-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+}
+
+.video-content {
+    display: flex;
+    flex: 1;
+}
+
+.main-video {
+    flex: 3;
+    padding: 20px;
+}
+
+.video-sidebar {
+    flex: 1;
+    background-color: #f8f9fa;
+    padding: 20px;
+    overflow-y: auto;
+    border-left: 1px solid #dee2e6;
+}
+
+.video-list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.video-list-item:hover {
+    background-color: #e9ecef;
+}
+
+.video-list-item.active {
+    background-color: #e9ecef;
+    border-left: 3px solid #007bff;
+}
+
+.video-list-item.locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.video-list-thumbnail {
+    width: 80px;
+    height: 45px;
+    object-fit: cover;
+    margin-right: 10px;
+    border-radius: 4px;
+}
+
+.video-list-info {
+    flex: 1;
+}
+
+.video-list-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.video-list-meta {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.video-navigation {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.nav-button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+    background-color: #0069d9;
+}
+
+.nav-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.video-progress-bar {
+    height: 5px;
+    background-color: #e9ecef;
+    margin-top: 10px;
+}
+
+.video-progress {
+    height: 100%;
+    background-color: #007bff;
+    width: 0%;
+}
+
+/* Fix for login form text overlapping */
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-control {
+    height: auto;
+    padding: 10px 12px;
+}
+
+/* Error message styling */
+.alert {
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Membership tier badges */
+.tier-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tier-regular {
+    background-color: #28a745;
+    color: white;
+}
+
+.tier-vip {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.tier-diamond {
+    background-color: #6f42c1;
+    color: white;
+}

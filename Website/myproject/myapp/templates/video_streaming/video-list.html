@@ -1,0 +1,421 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Video Library - Be Her Best</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'css/plyr.css' %}">
+    <style>
+        /* Modern Video Card Styles */
+        .video-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .video-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .video-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .video-card:hover .video-thumbnail img {
+            transform: scale(1.05);
+        }
+
+        .video-thumbnail.locked {
+            position: relative;
+        }
+
+        .video-thumbnail.locked:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1;
+        }
+
+        .video-thumbnail.locked:after {
+            content: '\f023';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            z-index: 2;
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 3;
+        }
+
+        .video-info {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .tier-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tier-regular { 
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .tier-vip { 
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            color: #000;
+        }
+
+        .tier-diamond { 
+            background: linear-gradient(45deg, #b2f5ea, #81e6d9);
+            color: #234e52;
+        }
+
+        .watch-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border-radius: 20px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .watch-btn:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+
+        .watch-btn i {
+            margin-right: 6px;
+        }
+
+        .video-progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 3;
+        }
+
+        .video-progress {
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s;
+        }
+
+        .locked-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+            width: 80%;
+        }
+
+        .locked-message h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .locked-message p {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .video-card {
+                margin-bottom: 1rem;
+            }
+            .video-title {
+                font-size: 1rem;
+            }
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 4rem 0;
+            position: relative;
+        }
+
+        .explore-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background-color: #ffd700;
+            color: #000;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            margin: 2rem auto;
+        }
+
+        .explore-btn:hover {
+            background-color: #ffed4a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: #000;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffd700;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="hero-section">
+        <h1 class="display-4">Course Video Library</h1>
+        <p class="text-muted">Your current membership: <span class="tier-badge tier-{{ user_tier|lower }}">{{ user_tier }}</span></p>
+        <a href="#video-content" class="explore-btn">Explore My Work</a>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </div>
+
+    <div id="video-content" class="container-fluid py-4">
+        <h1 class="display-4 mb-4 text-center">Course Video Library</h1>
+        <p class="text-center text-muted mb-5">Your current membership: <span class="tier-badge tier-{{ user_tier|lower }}">{{ user_tier }}</span></p>
+
+        <!-- Regular Videos Section -->
+        {% if regular_videos %}
+        <h2 class="h3 mb-4">Regular Videos</h2>
+        <div class="row">
+            {% for video in regular_videos %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+                        {% if video.duration %}
+                            <div class="video-duration">{{ video.duration }}</div>
+                        {% endif %}
+                        {% if video.progress %}
+                        <div class="video-progress-container">
+                            <div class="video-progress" style="width: {{ video.progress }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">{{ video.title }}</h3>
+                        <div class="video-meta">
+                            <span class="tier-badge tier-regular">Regular</span>
+                            <span>Added {{ video.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'video_player' video.id %}" class="watch-btn">
+                                <i class="fas fa-play"></i> Watch Video
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- VIP Videos Section -->
+        {% if vip_videos %}
+        <h2 class="h3 mb-4 mt-5">VIP Videos</h2>
+        <div class="row">
+            {% for video in vip_videos %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="video-card">
+                    <div class="video-thumbnail {% if user_tier != 'VIP' and user_tier != 'DIAMOND' %}locked{% endif %}">
+                        <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+                        {% if video.duration %}
+                            <div class="video-duration">{{ video.duration }}</div>
+                        {% endif %}
+                        {% if video.progress %}
+                        <div class="video-progress-container">
+                            <div class="video-progress" style="width: {{ video.progress }}%"></div>
+                        </div>
+                        {% endif %}
+                        {% if user_tier != 'VIP' and user_tier != 'DIAMOND' %}
+                        <div class="locked-message">
+                            <h4><i class="fas fa-lock"></i> VIP Content</h4>
+                            <p>Upgrade to VIP or Diamond to unlock</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">{{ video.title }}</h3>
+                        <div class="video-meta">
+                            <span class="tier-badge tier-vip">VIP</span>
+                            <span>Added {{ video.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="text-center mt-3">
+                            {% if user_tier == 'VIP' or user_tier == 'DIAMOND' %}
+                            <a href="{% url 'video_player' video.id %}" class="watch-btn">
+                                <i class="fas fa-play"></i> Watch Video
+                            </a>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-lock"></i> VIP Access Required
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Diamond Videos Section -->
+        {% if diamond_videos %}
+        <h2 class="h3 mb-4 mt-5">Diamond Videos</h2>
+        <div class="row">
+            {% for video in diamond_videos %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="video-card">
+                    <div class="video-thumbnail {% if user_tier != 'DIAMOND' %}locked{% endif %}">
+                        <img src="{{ video.get_thumbnail_url }}" alt="{{ video.title }}">
+                        {% if video.duration %}
+                            <div class="video-duration">{{ video.duration }}</div>
+                        {% endif %}
+                        {% if video.progress %}
+                        <div class="video-progress-container">
+                            <div class="video-progress" style="width: {{ video.progress }}%"></div>
+                        </div>
+                        {% endif %}
+                        {% if user_tier != 'DIAMOND' %}
+                        <div class="locked-message">
+                            <h4><i class="fas fa-lock"></i> Diamond Content</h4>
+                            <p>Upgrade to Diamond to unlock</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">{{ video.title }}</h3>
+                        <div class="video-meta">
+                            <span class="tier-badge tier-diamond">Diamond</span>
+                            <span>Added {{ video.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="text-center mt-3">
+                            {% if user_tier == 'DIAMOND' %}
+                            <a href="{% url 'video_player' video.id %}" class="watch-btn">
+                                <i class="fas fa-play"></i> Watch Video
+                            </a>
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-lock"></i> Diamond Access Required
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/plyr.js' %}"></script>
+    <script>
+        // Smooth scroll for the explore button and scroll indicator
+        document.querySelector('.explore-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#video-content').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.querySelector('.scroll-indicator').addEventListener('click', function() {
+            document.querySelector('#video-content').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

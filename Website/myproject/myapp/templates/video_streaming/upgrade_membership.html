@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Upgrade Membership{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pricing-header {
+    max-width: 700px;
+  }
+  
+  .pricing-card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+    height: 100%;
+  }
+  
+  .pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .pricing-card.highlight {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+  }
+  
+  .pricing-card.highlight:hover {
+    transform: scale(1.05) translateY(-10px);
+  }
+  
+  .card-header {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .tier-name {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .price {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 20px 0;
+  }
+  
+  .price small {
+    font-size: 16px;
+    font-weight: 400;
+  }
+  
+  .feature-list {
+    margin: 25px 0;
+    padding: 0;
+    list-style: none;
+  }
+  
+  .feature-list li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .feature-list li i {
+    margin-right: 10px;
+  }
+  
+  .feature-available {
+    color: #4CAF50;
+  }
+  
+  .feature-unavailable {
+    color: #ccc;
+  }
+  
+  .popular-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #FF5722;
+    color: white;
+    padding: 8px 15px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom-left-radius: 10px;
+  }
+  
+  .current-plan {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom-right-radius: 10px;
+  }
+  
+  .payment-methods {
+    margin-top: 50px;
+  }
+  
+  .payment-method-title {
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  
+  .payment-form {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .payment-proof-container {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+  
+  .payment-proof-container:hover {
+    border-color: #007bff;
+  }
+  
+  .payment-proof-container i {
+    font-size: 48px;
+    color: #6c757d;
+    margin-bottom: 15px;
+  }
+  
+  .payment-instructions {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .payment-instructions ol {
+    margin-bottom: 0;
+  }
+  
+  .tier-regular {
+    background-color: #2196F3;
+  }
+  
+  .tier-vip {
+    background-color: #FFC107;
+  }
+  
+  .tier-diamond {
+    background-color: #9C27B0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="pricing-header mx-auto text-center mb-5">
+    <h1 class="display-4">Upgrade Your Membership</h1>
+    <p class="lead">Choose the plan that best fits your needs and unlock premium content.</p>
+  </div>
+  
+  <div class="row mb-5">
+    <!-- Regular Tier -->
+    <div class="col-lg-4 mb-4">
+      <div class="card pricing-card h-100 {% if user.profile.membership_tier == 'regular' %}highlight{% endif %}">
+        {% if user.profile.membership_tier == 'regular' %}
+          <div class="current-plan">Current Plan</div>
+        {% endif %}
+        <div class="card-header text-center bg-primary text-white py-4">
+          <h4 class="tier-name">Regular</h4>
+        </div>
+        <div class="card-body text-center">
+          <div class="price">
+            $0 <small>/month</small>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fas fa-check feature-available"></i> Access to basic courses</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Access to VIP courses</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Access to Diamond courses</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Priority support</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Download course materials</li>
+          </ul>
+          {% if user.profile.membership_tier == 'regular' %}
+            <button class="btn btn-lg btn-outline-primary w-100" disabled>Current Plan</button>
+          {% else %}
+            <form method="post" action="{% url 'downgrade_membership' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-lg btn-outline-primary w-100">Downgrade</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- VIP Tier -->
+    <div class="col-lg-4 mb-4">
+      <div class="card pricing-card h-100 {% if user.profile.membership_tier == 'vip' %}highlight{% endif %}">
+        {% if user.profile.membership_tier == 'vip' %}
+          <div class="current-plan">Current Plan</div>
+        {% endif %}
+        <div class="popular-badge">Popular</div>
+        <div class="card-header text-center bg-warning text-white py-4">
+          <h4 class="tier-name">VIP</h4>
+        </div>
+        <div class="card-body text-center">
+          <div class="price">
+            $25 <small>/month</small>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fas fa-check feature-available"></i> Access to basic courses</li>
+            <li><i class="fas fa-check feature-available"></i> Access to VIP courses</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Access to Diamond courses</li>
+            <li><i class="fas fa-check feature-available"></i> Priority support</li>
+            <li><i class="fas fa-times feature-unavailable"></i> Download course materials</li>
+          </ul>
+          {% if user.profile.membership_tier == 'vip' %}
+            <button class="btn btn-lg btn-warning w-100 text-white" disabled>Current Plan</button>
+          {% elif user.profile.membership_tier == 'diamond' %}
+            <form method="post" action="{% url 'downgrade_membership' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="vip">
+              <button type="submit" class="btn btn-lg btn-warning w-100 text-white">Downgrade to VIP</button>
+            </form>
+          {% else %}
+            <a href="#payment-section" class="btn btn-lg btn-warning w-100 text-white" data-tier="vip">Upgrade to VIP</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Diamond Tier -->
+    <div class="col-lg-4 mb-4">
+      <div class="card pricing-card h-100 {% if user.profile.membership_tier == 'diamond' %}highlight{% endif %}">
+        {% if user.profile.membership_tier == 'diamond' %}
+          <div class="current-plan">Current Plan</div>
+        {% endif %}
+        <div class="card-header text-center bg-purple text-white py-4" style="background-color: #9C27B0;">
+          <h4 class="tier-name">Diamond</h4>
+        </div>
+        <div class="card-body text-center">
+          <div class="price">
+            $50 <small>/month</small>
+          </div>
+          <ul class="feature-list">
+            <li><i class="fas fa-check feature-available"></i> Access to basic courses</li>
+            <li><i class="fas fa-check feature-available"></i> Access to VIP courses</li>
+            <li><i class="fas fa-check feature-available"></i> Access to Diamond courses</li>
+            <li><i class="fas fa-check feature-available"></i> Priority support</li>
+            <li><i class="fas fa-check feature-available"></i> Download course materials</li>
+          </ul>
+          {% if user.profile.membership_tier == 'diamond' %}
+            <button class="btn btn-lg w-100 text-white" disabled style="background-color: #9C27B0;">Current Plan</button>
+          {% else %}
+            <a href="#payment-section" class="btn btn-lg w-100 text-white" data-tier="diamond" style="background-color: #9C27B0;">Upgrade to Diamond</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% if user.profile.membership_tier != 'diamond' %}
+    <div id="payment-section" class="payment-methods">
+      <h2 class="text-center mb-5">Complete Your Upgrade</h2>
+      
+      <div class="payment-instructions mb-4">
+        <h5><i class="fas fa-info-circle mr-2"></i> Payment Instructions</h5>
+        <ol>
+          <li>Make a payment to one of our accounts listed below</li>
+          <li>Take a screenshot of your payment receipt</li>
+          <li>Upload the screenshot below</li>
+          <li>Wait for admin approval (usually within 24-48 hours)</li>
+        </ol>
+      </div>
+      
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-university mr-2"></i> Bank Transfer</h5>
+            </div>
+            <div class="card-body">
+              <p><strong>Bank Name:</strong> Example Bank</p>
+              <p><strong>Account Number:</strong> 1234567890</p>
+              <p><strong>Account Name:</strong> Example Company Ltd</p>
+              <p><strong>Reference:</strong> Your username ({{ user.username }})</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fab fa-paypal mr-2"></i> PayPal</h5>
+            </div>
+            <div class="card-body">
+              <p><strong>PayPal Email:</strong> payments@example.com</p>
+              <p><strong>Note:</strong> Include your username ({{ user.username }}) in the payment note</p>
+              <p><strong>Link:</strong> <a href="https://paypal.me/examplecompany" target="_blank">paypal.me/examplecompany</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="payment-form">
+        <form method="post" action="{% url 'submit_payment_proof' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="requested_tier" id="requested_tier" value="vip">
+          
+          <div class="form-group mb-4">
+            <label for="payment_proof" class="form-label">Upload Payment Proof</label>
+            <div class="payment-proof-container" onclick="document.getElementById('payment_proof').click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <h5>Click to upload payment proof</h5>
+              <p class="text-muted">Supported formats: JPG, PNG (Max 2MB)</p>
+              <div id="preview-container" style="display: none;">
+                <img id="proof-preview" src="#" alt="Payment proof preview" style="max-width: 100%; max-height: 200px;">
+              </div>
+            </div>
+            <input type="file" id="payment_proof" name="payment_proof" class="form-control d-none" accept="image/jpeg,image/png" required>
+          </div>
+          
+          <div class="form-group mb-4">
+            <label for="payment_notes" class="form-label">Additional Notes (Optional)</label>
+            <textarea id="payment_notes" name="payment_notes" class="form-control" rows="3" placeholder="Any additional information about your payment"></textarea>
+          </div>
+          
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg px-5">Submit Payment Proof</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle tier selection
+    const tierButtons = document.querySelectorAll('[data-tier]');
+    const requestedTierInput = document.getElementById('requested_tier');
+    
+    tierButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const tier = this.getAttribute('data-tier');
+        requestedTierInput.value = tier;
+        
+        // Update UI to show selected tier
+        tierButtons.forEach(btn => {
+          const card = btn.closest('.pricing-card');
+          if (btn === this) {
+            card.classList.add('highlight');
+          } else {
+            card.classList.remove('highlight');
+          }
+        });
+      });
+    });
+    
+    // Handle file upload preview
+    const paymentProofInput = document.getElementById('payment_proof');
+    const proofPreview = document.getElementById('proof-preview');
+    const previewContainer = document.getElementById('preview-container');
+    
+    paymentProofInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          proofPreview.src = e.target.result;
+          previewContainer.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  });
+</script>
+{% endblock %}

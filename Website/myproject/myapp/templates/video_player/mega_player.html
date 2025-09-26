@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .plyr {
+        --plyr-color-main: #5a67d8;
+        --plyr-video-control-color: #fff;
+        --plyr-video-control-color-hover: #5a67d8;
+    }
+    
+    .video-watermark {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        pointer-events: none;
+        z-index: 10;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        user-select: none;
+    }
+    
+    .video-watermark.top-left {
+        top: 10%;
+        left: 5%;
+    }
+    
+    .video-watermark.top-right {
+        top: 10%;
+        right: 5%;
+    }
+    
+    .video-watermark.bottom-left {
+        bottom: 15%;
+        left: 5%;
+    }
+    
+    .video-watermark.bottom-right {
+        bottom: 15%;
+        right: 5%;
+    }
+    
+    .video-info {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a202c;
+    }
+    
+    .video-description {
+        color: #4a5568;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    /* Responsive video container */
+    @media (max-width: 768px) {
+        .video-container {
+            border-radius: 4px;
+        }
+        
+        #mega-embed {
+            height: 400px !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        #mega-embed {
+            height: 300px !important;
+        }
+    }
+    
+    /* Anti-developer tools and right-click protection */
+    body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-4">
+    <div class="video-container">
+        <div id="watermark" class="video-watermark"></div>
+        <div id="error-message" class="alert alert-error alert-dismissible fade show" role="alert" style="display: none;">
+            An error occurred while loading the video.
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+        <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; z-index: 5;">
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <iframe id="mega-embed" src="{{ streaming_url }}" 
+                frameborder="0" allowfullscreen style="width:100%; height:600px;"
+                onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+    </div>
+    
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-description">{{ video.description|linebreaks }}</div>
+        <div class="video-meta">
+            <span>Duration: {{ video.duration }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set up variables from Django context
+    const videoStreamingUrl = "{{ streaming_url|escapejs }}";
+    const watermarkText = "{{ watermark_data.text|escapejs }}";
+    const watermarkPosition = "{{ watermark_data.position|default:'random'|escapejs }}";
+    const watermarkOpacity = "{{ watermark_data.opacity|default:'0.7'|escapejs }}";
+    const videoId = "{{ video.id }}";
+    
+    // Simple debug logging
+    console.log('Video player initialized with URL:', videoStreamingUrl);
+    console.log('Video ID:', videoId);
+    
+    // Prevent right-click
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    
+    // Prevent developer tools shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+        if (
+            e.keyCode === 123 || 
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))
+        ) {
+            e.preventDefault();
+        }
+    });
+    
+    // Handle video loading error
+    function handleVideoError() {
+        document.getElementById('error-message').style.display = 'block';
+        console.error('Error loading video from URL:', videoStreamingUrl);
+    }
+    
+    function hideErrorMessage() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+    
+    function hideLoadingIndicator() {
+        document.getElementById('loading-indicator').style.display = 'none';
+        // Also hide error message if iframe loaded successfully
+        hideErrorMessage();
+    }
+    
+    // Check if iframe loaded correctly
+    document.getElementById('mega-embed').addEventListener('error', handleVideoError);
+    
+    // Set up watermark
+    const watermarkElement = document.getElementById('watermark');
+    const watermarkPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+    let currentPosition = 0;
+    
+    function updateWatermarkPosition() {
+        // Remove all position classes
+        watermarkPositions.forEach(pos => {
+            watermarkElement.classList.remove(pos);
+        });
+        
+        // Set position based on watermark data or randomly
+        if (watermarkPosition === 'random') {
+            // Change position every 10-30 seconds
+            currentPosition = (currentPosition + 1) % watermarkPositions.length;
+            watermarkElement.classList.add(watermarkPositions[currentPosition]);
+        } else {
+            watermarkElement.classList.add(watermarkPosition);
+        }
+        
+        watermarkElement.textContent = watermarkText;
+        watermarkElement.style.opacity = watermarkOpacity;
+    }
+    
+    // Set initial watermark
+    updateWatermarkPosition();
+    
+    // Update watermark position periodically
+    setInterval(updateWatermarkPosition, Math.floor(Math.random() * 20000) + 10000);
+    
+    // Listen for messages from the iframe
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'videoProgress') {
+            // Send progress to server
+            updateProgress(
+                event.data.currentTime,
+                event.data.duration,
+                event.data.completed
+            );
+        }
+    });
+    
+    // Debug information is now handled at the top of the script
+    
+    function updateProgress(currentTime, duration, completed) {
+        fetch(`/api/mega-videos/${videoId}/progress/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                current_time: currentTime,
+                duration: duration,
+                completed: completed
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Progress updated:', data);
+        })
+        .catch(error => {
+            console.error('Error updating progress:', error);
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

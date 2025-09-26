@@ -1,0 +1,21 @@
+Django>=5.1.6
+djangorestframework>=3.14.0
+gunicorn==21.2.0
+psycopg2-binary==2.9.9
+whitenoise==6.6.0
+asgiref==3.8.1
+sqlparse==0.4.4
+pytz==2023.3
+django-environ==0.11.2
+python-dotenv==1.0.0
+django-cors-headers==4.3.1
+Pillow>=10.0.0
+dj-database-url
+cryptography
+requests
+python-ffmpeg-video-streaming
+ffmpeg-python
+PyJWT
+mega.py==1.0.8
+tenacity==5.1.5
+-e .

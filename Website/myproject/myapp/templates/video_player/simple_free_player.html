@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .video-info {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a202c;
+    }
+    
+    .video-description {
+        color: #4a5568;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    
+    .nav-button, .watch-btn {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(45deg, #ff4081, #e91e63);
+        color: #fff;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+    }
+    
+    .nav-button:hover, .watch-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(233, 30, 99, 0.4);
+        color: #fff;
+    }
+    
+    .nav-button.disabled {
+        background: #e9ecef;
+        color: #adb5bd;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    
+    .nav-button.disabled:hover {
+        transform: none;
+    }
+    
+    .nav-button i {
+        margin-right: 8px;
+    }
+    
+    .nav-button.next i {
+        margin-right: 0;
+        margin-left: 8px;
+    }
+    
+    /* Direct link section */
+    .direct-link-section {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .direct-link-button {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .direct-link-button:hover {
+        background-color: #218838;
+        color: white;
+    }
+    
+    /* Mega embed */
+    .mega-embed {
+        width: 100%;
+        height: 600px;
+        border: none;
+    }
+    
+    @media (max-width: 768px) {
+        .mega-embed {
+            height: 400px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .mega-embed {
+            height: 300px;
+        }
+    }
+    
+    /* HTML5 video player */
+    .html5-player {
+        width: 100%;
+        max-height: 600px;
+    }
+    
+    /* Tabs for different player options */
+    .player-tabs {
+        display: flex;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 15px;
+    }
+    
+    .player-tab {
+        padding: 10px 15px;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+    }
+    
+    .player-tab.active {
+        background-color: #fff;
+        border-bottom: 1px solid #fff;
+        margin-bottom: -1px;
+        font-weight: bold;
+    }
+    
+    .player-content {
+        display: none;
+    }
+    
+    .player-content.active {
+        display: block;
+    }
+    
+    /* Error message */
+    .error-message {
+        padding: 15px;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-4">
+    <div class="video-container">
+        <!-- Loading indicator -->
+        <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; z-index: 5;">
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Error message (initially hidden) -->
+        <div id="error-message" class="error-message" style="display: none;">
+            <p>There was an error loading the video. Please try again or contact support.</p>
+        </div>
+        
+        <!-- Show appropriate player based on video type -->
+        {% if 'mega.nz' in streaming_url %}
+            <!-- MEGA Embed Player -->
+            <iframe id="mega-embed" src="{{ streaming_url }}" 
+                    class="mega-embed" frameborder="0" allowfullscreen></iframe>
+        {% else %}
+            <!-- HTML5 Player -->
+            <video id="html5-player" controls preload="auto" poster="{{ thumbnail_url }}" class="html5-player">
+                <source src="{{ streaming_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        {% endif %}
+    </div>
+    
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-description">{{ video.description|linebreaks }}</div>
+        <div class="video-meta">
+            <span>Duration: {{ video.duration }}</span>
+        </div>
+        
+        <div class="navigation-buttons">
+            {% if previous_video %}
+                <a href="{% url 'free_video_player' previous_video.id %}" class="nav-button prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </a>
+            {% else %}
+                <span class="nav-button disabled prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </span>
+            {% endif %}
+            
+            <a href="{% url 'free_course' %}" class="nav-button">
+                <i class="fas fa-th-list"></i> All Free Videos
+            </a>
+            
+            {% if next_video %}
+                <a href="{% url 'free_video_player' next_video.id %}" class="nav-button next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <span class="nav-button disabled next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const videoUrl = "{{ streaming_url|escapejs }}";
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const html5Player = document.getElementById('html5-player');
+        const megaEmbed = document.getElementById('mega-embed');
+        
+        // Function to hide loading indicator
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Hide loading indicator after a short delay
+        setTimeout(hideLoading, 1000);
+        
+        // Function to show error message
+        function showError() {
+            errorMessage.style.display = 'block';
+        }
+        
+        // Tab switching functionality
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.getAttribute('data-target');
+                
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                this.classList.add('active');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Handle HTML5 player loading
+        html5Player.addEventListener('loadeddata', function() {
+            hideLoading();
+        });
+        
+        // Handle HTML5 player errors
+        html5Player.addEventListener('error', function(e) {
+            console.error('HTML5 video error:', e);
+            hideLoading();
+            showError();
+            
+            // Switch to Mega embed tab if it's a Mega URL
+            if (videoUrl.includes('mega.nz')) {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                const megaTab = document.querySelector('[data-target="mega-embed-tab"]');
+                if (megaTab) {
+                    megaTab.classList.add('active');
+                    document.getElementById('mega-embed-tab').classList.add('active');
+                }
+            }
+        });
+        
+        // Set a timeout in case the video never loads
+        setTimeout(function() {
+            if (loadingIndicator.style.display !== 'none') {
+                hideLoading();
+                
+                // If it's a Mega URL, switch to Mega embed tab
+                if (videoUrl.includes('mega.nz')) {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    const megaTab = document.querySelector('[data-target="mega-embed-tab"]');
+                    if (megaTab) {
+                        megaTab.classList.add('active');
+                        document.getElementById('mega-embed-tab').classList.add('active');
+                    }
+                } else {
+                    showError();
+                }
+            }
+        }, 5000); // 5 seconds timeout
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% if not folder.can_access(request.user) %}
+<div class="alert alert-warning">
+    <h5><i class="fas fa-lock"></i> Access Restricted</h5>
+    <p>This folder requires {{ folder.get_membership_tier_display }} membership or higher.</p>
+    
+    {% if request.user.is_authenticated %}
+        {% if not pending_request %}
+        <form method="post" action="{% url 'request_folder_access' folder.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Request Note (optional)</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Request Access
+            </button>
+        </form>
+        {% else %}
+        <p class="mb-0">Your access request is pending approval.</p>
+        {% endif %}
+        
+        <a href="{% url 'upgrade_membership' %}" class="btn btn-success mt-2">
+            Upgrade Membership
+        </a>
+    {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">
+            Login to Request Access
+        </a>
+    {% endif %}
+</div>
+{% endif %} 

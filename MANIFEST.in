@@ -1,0 +1,20 @@
+include README.md
+include requirements.txt
+include runtime.txt
+include Procfile
+include start.sh
+include build.sh
+include .env.example
+
+# Include all Python files
+recursive-include Website *.py
+recursive-include myproject *.py
+
+# Include static and template files
+recursive-include Website/static *
+recursive-include Website/templates *
+recursive-include myproject/static *
+recursive-include myproject/templates *
+
+# Include media directory
+recursive-include media *

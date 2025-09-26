@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Required - Be Her Best</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body p-5">
+                        <i class="fas fa-lock text-warning mb-4" style="font-size: 4rem;"></i>
+                        <h2 class="mb-4">የክፍያ ማረጋገጫ ያስፈልጋል</h2>
+                        <p class="lead mb-4">ይህንን ኮርስ ለማግኘት፣ እባክዎ የክፍያ ማረጋገጫዎን ያስገቡ።</p>
+                        
+                        <div class="alert alert-info mb-4">
+                            <h5 class="mb-3">የክፍያ ሂደት:</h5>
+                            <ol class="text-left mb-0">
+                                <li>ለምዝገባ ይሂዱ</li>
+                                <li>የክፍያ ማረጋገጫዎን ያስገቡ</li>
+                                <li>ማረጋገጫው ከጸደቀ በኋላ ወደ ኮርሱ መዳረሻ ይሰጥዎታል</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg mr-3">አዲስ ተጠቃሚ ከሆኑ ይመዝገቡ</a>
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">አባል ከሆኑ ይግቡ</a>
+                        </div>
+                        
+                        <p class="text-muted mb-0">ማንኛውም ጥያቄ ካለዎት እባክዎ ያግኙን</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

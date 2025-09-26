@@ -1,0 +1,191 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Reports - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Reports</h1>
+        <div>
+            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" id="downloadPDF">
+                <i class="fas fa-download fa-sm text-white-50"></i> Generate PDF Report
+            </a>
+            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm ml-2" id="downloadCSV">
+                <i class="fas fa-file-csv fa-sm text-white-50"></i> Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Revenue Overview Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="revenueDropdown" data-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                    <div class="dropdown-header">Time Range:</div>
+                    <a class="dropdown-item" href="#" data-range="7">Last 7 Days</a>
+                    <a class="dropdown-item" href="#" data-range="30">Last 30 Days</a>
+                    <a class="dropdown-item" href="#" data-range="90">Last 90 Days</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-area">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Membership Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Membership Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="membershipPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Payments</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.user.username }}</td>
+                                    <td>${{ payment.amount }}</td>
+                                    <td>{{ payment.date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if payment.status == 'approved' %}
+                                            <span class="badge badge-success">Approved</span>
+                                        {% elif payment.status == 'pending' %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: {{ monthly_revenue|safe }},
+                backgroundColor: '#4e73df',
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.parsed.y;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Membership Distribution Chart
+    const membershipCtx = document.getElementById('membershipPieChart').getContext('2d');
+    const membershipStats = {{ membership_stats|safe }};
+    new Chart(membershipCtx, {
+        type: 'pie',
+        data: {
+            labels: membershipStats.map(stat => stat.membership_tier),
+            datasets: [{
+                data: membershipStats.map(stat => stat.count),
+                backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#f4b619'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value * 100) / total).toFixed(1);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Download handlers
+    document.getElementById('downloadPDF').addEventListener('click', function(e) {
+        e.preventDefault();
+        // We'll implement PDF export functionality later
+        alert('PDF export coming soon!');
+    });
+
+    document.getElementById('downloadCSV').addEventListener('click', function(e) {
+        e.preventDefault();
+        // We'll implement CSV export functionality later
+        alert('CSV export coming soon!');
+    });
+</script>
+{% endblock %}

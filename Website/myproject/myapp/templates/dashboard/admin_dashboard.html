@@ -1,0 +1,669 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block title %}Main Dashboard{% endblock %}
+
+{% block content %}
+<!-- Recent Activities Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Recent Activities</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in recent_activities %}
+                    <tr>
+                        <td>{{ activity.timestamp|date:"M d, Y H:i" }}</td>
+                        <td>{{ activity.user.username }}</td>
+                        <td>
+                            <span class="badge bg-{{ activity.badge_color }}">
+                                {{ activity.action_type|title }}
+                            </span>
+                        </td>
+                        <td>{{ activity.action_detail }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No recent activities</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-3">
+            <a href="{% url 'audit_logs' %}" class="btn btn-primary btn-sm">
+                View All Activities
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- User Growth Chart -->
+    <div class="col-xl-4 col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">User Growth</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="col-xl-4 col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membership Distribution Chart -->
+    <div class="col-xl-4 col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Membership Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="membershipChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row">
+    <!-- Total Users Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Users
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ total_users }}
+                        </div>
+                        {% if user_growth > 0 %}
+                        <div class="text-xs text-success mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ user_growth }}% from last month
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Users
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ active_users }}
+                        </div>
+                        {% if active_growth > 0 %}
+                        <div class="text-xs text-success mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ active_growth }}% from last month
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Users Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Premium Users
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ premium_users }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-crown fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Revenue Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Total Revenue
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            ${{ total_revenue }}
+                        </div>
+                        {% if revenue_growth > 0 %}
+                        <div class="text-xs text-success mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ revenue_growth }}% from last month
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MEGA Video Management Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-video me-2"></i> MEGA Video Management
+        </h5>
+        <a href="{% url 'mega_video_management' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-list"></i> Manage MEGA Videos
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Total Videos Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    TOTAL VIDEOS</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ mega_video_counts.total|default:"0" }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-video fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regular Videos Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    REGULAR VIDEOS</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ mega_video_counts.regular|default:"0" }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-video fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIP Videos Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    VIP VIDEOS</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ mega_video_counts.vip|default:"0" }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-video fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diamond Videos Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    DIAMOND VIDEOS</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ mega_video_counts.diamond|default:"0" }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-video fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Folder Modal -->
+<div class="modal fade" id="folderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="folderForm">
+                    <div class="mb-3">
+                        <label class="form-label">Folder Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Google Drive Folder ID</label>
+                        <input type="text" name="folder_id" class="form-control" required>
+                        <div class="form-text">Enter the folder ID from Google Drive URL</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Membership Tier</label>
+                        <select name="membership_tier" class="form-select">
+                            <option value="basic">Basic</option>
+                            <option value="premium">Premium</option>
+                            <option value="vip">VIP</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sync Frequency (minutes)</label>
+                        <input type="number" 
+                               name="sync_frequency" 
+                               class="form-control"
+                               min="5" 
+                               max="1440" 
+                               value="60" 
+                               required>
+                        <div class="form-text">How often to sync this folder (5-1440 minutes)</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveFolder()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this CSS to your existing styles or in a style tag -->
+<style>
+.folder-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.folder-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge.bg-basic { background-color: #6c757d; }
+.badge.bg-premium { background-color: #ffd700; color: #000; }
+.badge.bg-vip { background-color: #9c27b0; }
+
+.folder-stats i {
+    width: 16px;
+    text-align: center;
+}
+
+.btn-group .btn {
+    flex: 1;
+}
+
+/* Animation for sync button */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-sync.spinning {
+    animation: spin 1s linear infinite;
+}
+</style>
+
+<!-- Add this JavaScript to your existing scripts or in a script tag -->
+<script>
+function showAddFolderModal() {
+    const modal = new bootstrap.Modal(document.getElementById('folderModal'));
+    modal.show();
+}
+
+function viewFolder(folderId) {
+    window.location.href = `/admin/drive-folder/${folderId}/videos/`;
+}
+
+async function syncFolder(folderId) {
+    const button = event.target.closest('button');
+    button.disabled = true;
+    const icon = button.querySelector('i');
+    icon.classList.add('spinning');
+
+    try {
+        const response = await fetch(`/admin/drive-folder/${folderId}/sync/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            showNotification('Folder synced successfully', 'success');
+            updateFolderStats(folderId, data);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Error syncing folder', 'error');
+    } finally {
+        button.disabled = false;
+        icon.classList.remove('spinning');
+    }
+}
+
+async function deleteFolder(folderId) {
+    if (!confirm('Are you sure you want to delete this folder? This will only remove the folder connection, not the actual Google Drive folder.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/drive-folder/${folderId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            const folderCard = document.querySelector(`[data-folder-id="${folderId}"]`);
+            folderCard.remove();
+            showNotification('Folder deleted successfully', 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Error deleting folder', 'error');
+    }
+}
+
+function updateFolderStats(folderId, data) {
+    const folderCard = document.querySelector(`[data-folder-id="${folderId}"]`);
+    if (folderCard) {
+        const videoCount = folderCard.querySelector('.video-count');
+        const lastSynced = folderCard.querySelector('.last-synced');
+        
+        if (videoCount) videoCount.textContent = `${data.videos_count} videos`;
+        if (lastSynced) lastSynced.textContent = `Last sync: ${new Date().toLocaleString()}`;
+    }
+}
+
+function showNotification(message, type) {
+    // Implement your notification system here
+    alert(message);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Setup search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('folderSearch');
+    const tierFilter = document.getElementById('tierFilter');
+    
+    function filterFolders() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedTier = tierFilter.value;
+        
+        document.querySelectorAll('.folder-card').forEach(card => {
+            const folderName = card.querySelector('.card-title').textContent.toLowerCase();
+            const folderTier = card.dataset.tier;
+            
+            const matchesSearch = folderName.includes(searchTerm);
+            const matchesTier = !selectedTier || folderTier === selectedTier;
+            
+            card.closest('.col-md-4').style.display = 
+                matchesSearch && matchesTier ? 'block' : 'none';
+        });
+    }
+    
+    searchInput.addEventListener('input', filterFolders);
+    tierFilter.addEventListener('change', filterFolders);
+});
+
+// Video management functions
+function viewVideo(videoId) {
+    window.open(`/videos/mega/${videoId}/`, '_blank');
+}
+    
+function editVideo(videoId) {
+    window.location.href = `/dashboard/videos/${videoId}/edit/`;
+}
+    
+function deleteVideo(videoId) {
+    if (confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+        // Create a form and submit it to the delete endpoint
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/dashboard/videos/${videoId}/delete/`;
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = getCookie('csrftoken');
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+    
+// Filter videos based on search and tier filter
+function filterVideos() {
+    const searchTerm = document.getElementById('videoSearch').value.toLowerCase();
+    const tierFilter = document.getElementById('tierFilter').value.toLowerCase();
+    const videoCards = document.querySelectorAll('.video-card');
+    
+    videoCards.forEach(card => {
+        const videoTitle = card.querySelector('.card-title').textContent.toLowerCase();
+        const videoTier = card.getAttribute('data-tier').toLowerCase();
+        
+        const matchesSearch = videoTitle.includes(searchTerm);
+        const matchesTier = tierFilter === '' || videoTier === tierFilter;
+        
+        if (matchesSearch && matchesTier) {
+            card.closest('.col-md-4').style.display = '';
+        } else {
+            card.closest('.col-md-4').style.display = 'none';
+        }
+    });
+}
+    
+// Setup search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('videoSearch');
+    const tierFilter = document.getElementById('tierFilter');
+    
+    if (searchInput && tierFilter) {
+        searchInput.addEventListener('input', filterVideos);
+        tierFilter.addEventListener('change', filterVideos);
+    }
+});
+</script>
+
+<!-- Add this JavaScript to your existing scripts or in a script tag -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse Django template variables safely
+        const userGrowthData = JSON.parse('{{ user_growth_data|escapejs }}');
+        const userGrowthLabels = JSON.parse('{{ user_growth_labels|escapejs }}');
+        const revenueData = JSON.parse('{{ revenue_data|escapejs }}');
+        const revenueLabels = JSON.parse('{{ revenue_labels|escapejs }}');
+        const membershipStats = JSON.parse('{{ membership_stats|escapejs }}');
+
+        // User Growth Chart
+        const userCtx = document.getElementById('userGrowthChart').getContext('2d');
+        new Chart(userCtx, {
+            type: 'line',
+            data: {
+                labels: userGrowthLabels,
+                datasets: [{
+                    label: 'Total Users',
+                    data: userGrowthData,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Monthly Revenue',
+                    data: revenueData,
+                    backgroundColor: '#1cc88a',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Membership Distribution Chart
+        const membershipCtx = document.getElementById('membershipChart').getContext('2d');
+        new Chart(membershipCtx, {
+            type: 'pie',
+            data: {
+                labels: membershipStats.map(item => item.membership_tier.toUpperCase()),
+                datasets: [{
+                    data: membershipStats.map(item => item.count),
+                    backgroundColor: [
+                        '#4e73df',  // Regular
+                        '#1cc88a',  // VIP
+                        '#f6c23e'   // Diamond
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

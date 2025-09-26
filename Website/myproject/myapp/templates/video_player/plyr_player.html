@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .plyr {
+        --plyr-color-main: #5a67d8;
+        --plyr-video-control-color: #fff;
+        --plyr-video-control-color-hover: #5a67d8;
+    }
+    
+    .video-watermark {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        pointer-events: none;
+        z-index: 10;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        user-select: none;
+    }
+    
+    .video-watermark.top-left {
+        top: 10%;
+        left: 5%;
+    }
+    
+    .video-watermark.top-right {
+        top: 10%;
+        right: 5%;
+    }
+    
+    .video-watermark.bottom-left {
+        bottom: 15%;
+        left: 5%;
+    }
+    
+    .video-watermark.bottom-right {
+        bottom: 15%;
+        right: 5%;
+    }
+    
+    .video-info {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a202c;
+    }
+    
+    .video-description {
+        color: #4a5568;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    /* Anti-developer tools and right-click protection */
+    body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="video-container">
+        <div id="watermark" class="video-watermark"></div>
+        <video id="player" playsinline controls data-plyr-config='{"title": "{{ video.title }}"}'>
+            <source src="{{ secure_url }}" type="video/mp4" />
+        </video>
+    </div>
+    
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-description">{{ video.description|linebreaks }}</div>
+        <div class="video-meta">
+            <span>Duration: {{ video.duration }}</span>
+            <span>Views: {{ video.views }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+    // Prevent right-click
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    
+    // Prevent developer tools shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+        if (
+            e.keyCode === 123 || 
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))
+        ) {
+            e.preventDefault();
+        }
+    });
+    
+    // Initialize Plyr
+    const player = new Plyr('#player', {
+        controls: [
+            'play-large', 'play', 'progress', 'current-time', 'mute', 
+            'volume', 'settings', 'fullscreen'
+        ],
+        hideControls: true,
+        autoplay: false,
+        keyboard: { focused: true, global: false }
+    });
+    
+    // Set up watermark
+    const watermarkElement = document.getElementById('watermark');
+    const watermarkText = "{{ watermark_data.text|escapejs }}";
+    const watermarkPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+    let currentPosition = 0;
+    
+    function updateWatermarkPosition() {
+        // Remove all position classes
+        watermarkPositions.forEach(pos => {
+            watermarkElement.classList.remove(pos);
+        });
+        
+        // Set position based on watermark data or randomly
+        const position = "{{ watermark_data.position|default:'random' }}";
+        
+        if (position === 'random') {
+            // Change position every 10-30 seconds
+            currentPosition = (currentPosition + 1) % watermarkPositions.length;
+            watermarkElement.classList.add(watermarkPositions[currentPosition]);
+        } else {
+            watermarkElement.classList.add(position);
+        }
+        
+        watermarkElement.textContent = watermarkText;
+        watermarkElement.style.opacity = "{{ watermark_data.opacity|default:'0.7' }}";
+    }
+    
+    // Set initial watermark
+    updateWatermarkPosition();
+    
+    // Update watermark position periodically
+    setInterval(updateWatermarkPosition, Math.floor(Math.random() * 20000) + 10000);
+    
+    // Track video progress
+    let lastUpdateTime = 0;
+    const updateInterval = 5000; // Update every 5 seconds
+    
+    player.on('timeupdate', function() {
+        const currentTime = player.currentTime;
+        const duration = player.duration;
+        const now = Date.now();
+        
+        // Only update every 5 seconds to reduce server load
+        if (now - lastUpdateTime > updateInterval) {
+            lastUpdateTime = now;
+            updateProgress(currentTime, duration, false);
+        }
+    });
+    
+    player.on('ended', function() {
+        updateProgress(player.duration, player.duration, true);
+    });
+    
+    // Set initial position if we have progress
+    player.on('ready', function() {
+        const savedTime = parseFloat("{{ progress.current_time|default:0 }}");
+        if (savedTime > 0) {
+            player.currentTime = savedTime;
+        }
+    });
+    
+    function updateProgress(currentTime, duration, completed) {
+        fetch('/api/videos/{{ video.id }}/progress/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                current_time: currentTime,
+                duration: duration,
+                completed: completed
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Progress updated:', data);
+        })
+        .catch(error => {
+            console.error('Error updating progress:', error);
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

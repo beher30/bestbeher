@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <i class="fas fa-lock fa-4x mb-4 text-muted"></i>
+        <h2>Upgrade Required</h2>
+        <p class="lead">
+            This content requires a {{ required_tier }} membership.
+            <br>Your current membership: {{ current_tier }}
+        </p>
+        <div class="mt-4">
+            <a href="{% url 'upgrade_membership' %}" class="btn btn-primary btn-lg">
+                Upgrade Membership
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

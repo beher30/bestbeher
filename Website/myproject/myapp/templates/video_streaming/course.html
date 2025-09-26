@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Course Video Library - Be Her Best{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 main-title">Course Video Library</h1>
+        <p class="lead membership-status">Your current membership: {{ current_tier }}</p>
+    </div>
+
+    <!-- Membership Notice Alert - Only shown for users with pending payments -->
+    {% if has_pending_payment %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert" id="membershipNotice">
+      <h4 class="alert-heading">MEMBERSHIP NOTICE</h4>
+      <p>YOU will be upgraded after the admin approves your payment.<br>
+      For now, you are on the <strong>regular plan</strong>.</p>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="closeNoticeBtn">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <button type="button" class="btn btn-primary mt-2" id="okBtn">OK</button>
+    </div>
+    {% endif %}
+
+    <!-- Regular Videos Section -->
+    <div class="mb-5 video-section">
+        <h2 class="mb-4 section-title">Regular Videos</h2>
+        {% if regular_videos %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for video in regular_videos %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if video.thumbnail_url %}
+                        <img src="{{ video.thumbnail_url }}" class="card-img-top" alt="{{ video.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ video.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-info video-details">
+                                    {% if video.duration_ms %}
+                                    Duration: {{ video.duration }}
+                                    {% endif %}
+                                    <br>
+                                    Added: {{ video.created_at|date:"M d, Y" }}
+                                </small>
+                            </p>
+                            <a href="{% url 'play_mega_video' video.id %}" class="btn btn-primary video-btn">
+                                <i class="fas fa-play"></i> Watch Video
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-videos-message">No regular videos available.</p>
+        {% endif %}
+    </div>
+
+    <!-- VIP Videos Section -->
+    <div class="mb-5 video-section">
+        <h2 class="mb-4 section-title">VIP Videos</h2>
+        {% if vip_videos %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for video in vip_videos %}
+                <div class="col">
+                    <div class="card h-100 {% if not video.is_accessible %}bg-light{% endif %}">
+                        {% if video.thumbnail_url %}
+                        <img src="{{ video.thumbnail_url }}" class="card-img-top" alt="{{ video.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ video.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-info video-details">
+                                    {% if video.duration_ms %}
+                                    Duration: {{ video.duration }}
+                                    {% endif %}
+                                    <br>
+                                    Added: {{ video.created_at|date:"M d, Y" }}
+                                </small>
+                            </p>
+                            {% if video.is_accessible %}
+                                <a href="{% url 'play_mega_video' video.id %}" class="btn btn-primary video-btn">
+                                    <i class="fas fa-play"></i> Watch Video
+                                </a>
+                            {% else %}
+                                <div class="text-center">
+                                    <i class="fas fa-lock fa-2x mb-2 lock-icon"></i>
+                                    <p class="mb-2 locked-message">Upgrade to VIP to access</p>
+                                    <a href="{% url 'upgrade_membership' %}" class="btn btn-warning upgrade-btn">
+                                        Upgrade Now
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-videos-message">No VIP videos available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Diamond Videos Section -->
+    <div class="mb-5 video-section">
+        <h2 class="mb-4 section-title">Diamond Videos</h2>
+        {% if diamond_videos %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for video in diamond_videos %}
+                <div class="col">
+                    <div class="card h-100 {% if not video.is_accessible %}bg-light{% endif %}">
+                        {% if video.thumbnail_url %}
+                        <img src="{{ video.thumbnail_url }}" class="card-img-top" alt="{{ video.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ video.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-info video-details">
+                                    {% if video.duration_ms %}
+                                    Duration: {{ video.duration }}
+                                    {% endif %}
+                                    <br>
+                                    Added: {{ video.created_at|date:"M d, Y" }}
+                                </small>
+                            </p>
+                            {% if video.is_accessible %}
+                                <a href="{% url 'play_mega_video' video.id %}" class="btn btn-primary video-btn">
+                                    <i class="fas fa-play"></i> Watch Video
+                                </a>
+                            {% else %}
+                                <div class="text-center">
+                                    <i class="fas fa-lock fa-2x mb-2 lock-icon"></i>
+                                    <p class="mb-2 locked-message">Upgrade to Diamond to access</p>
+                                    <a href="{% url 'upgrade_membership' %}" class="btn btn-warning upgrade-btn">
+                                        Upgrade Now
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-videos-message">No Diamond videos available.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+  // JavaScript to handle the OK button click
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get the OK button and alert
+    const okBtn = document.getElementById('okBtn');
+    const closeBtn = document.getElementById('closeNoticeBtn');
+    const membershipNotice = document.getElementById('membershipNotice');
+    
+    // Add click event listener to OK button
+    if (okBtn) {
+      okBtn.addEventListener('click', function() {
+        if (membershipNotice) {
+          membershipNotice.style.display = 'none';
+        }
+      });
+    }
+    
+    // Add click event listener to close button
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        if (membershipNotice) {
+          membershipNotice.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+<style>
+/* Base styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Improved main content headline and section titles */
+.main-title {
+    color: #222222 !important;
+    font-weight: 900;
+    font-size: 3.5rem;
+    letter-spacing: -1px;
+    text-shadow: 1px 2px 6px rgba(0,0,0,0.04);
+    margin-bottom: 0.7em;
+    margin-top: 0.5em;
+    background: none !important;
+}
+
+.section-title {
+    color: #222222 !important;
+    font-weight: 800;
+    font-size: 2.1rem;
+    margin-bottom: 1.5em;
+    margin-top: 2.5em;
+    letter-spacing: -0.5px;
+    text-shadow: none;
+}
+
+.membership-status {
+    color: #222222 !important;
+    font-weight: 700;
+    background: none !important;
+}
+
+.video-details {
+    color: #000000 !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.no-videos-message {
+    color: #222222 !important;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin: 1.5em 0;
+}
+
+.locked-message {
+    color: #000000;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.lock-icon {
+    color: #000000;
+}
+
+/* Base card styling */
+.card {
+    transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    background-color: #fff;
+    color: #000000;
+}
+
+.card-title {
+    color: #000000;
+    font-weight: 800;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+    
+    .main-title {
+        color: #f5f5f5;
+        text-shadow: 1px 2px 8px rgba(0,0,0,0.25);
+    }
+    
+    .section-title {
+        color: #cccccc;
+    }
+    
+    .membership-status {
+        color: #ffffff;
+    }
+    
+    .card {
+        background-color: #1e1e1e;
+        color: #ffffff;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+    
+    .card-title {
+        color: #ffffff;
+    }
+    
+    .video-details {
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+    
+    .text-muted {
+        color: #ffffff !important;
+    }
+    
+    .no-videos-message {
+        color: #bbbbbb;
+    }
+    
+    .locked-message {
+        color: #ffffff;
+    }
+    
+    .bg-light {
+        background-color: #2a2a2a !important;
+        opacity: 0.8;
+    }
+    
+    .alert-info {
+        background-color: #1a3a4a;
+        color: #ffffff;
+        border-color: #206080;
+    }
+    
+    .lock-icon {
+        color: #ffffff;
+    }
+}
+
+/* Enhanced button styles */
+.btn-primary, .video-btn {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover, .video-btn:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-warning, .upgrade-btn {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000 !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-warning:hover, .upgrade-btn:hover {
+    background-color: #ffca2c;
+    border-color: #ffc720;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode button enhancements */
+@media (prefers-color-scheme: dark) {
+    .btn-primary, .video-btn {
+        background-color: #1a75ff;
+        border-color: #1a75ff;
+    }
+    
+    .btn-primary:hover, .video-btn:hover {
+        background-color: #3385ff;
+        border-color: #3385ff;
+    }
+    
+    .btn-warning, .upgrade-btn {
+        background-color: #ffcc00;
+        border-color: #ffcc00;
+        color: #000 !important;
+    }
+    
+    .btn-warning:hover, .upgrade-btn:hover {
+        background-color: #ffd633;
+        border-color: #ffd633;
+    }
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Alert styling */
+.alert-dismissible {
+    position: relative;
+    border-radius: 8px;
+}
+
+.alert-dismissible .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+.alert-info {
+    background-color: #cce5ff;
+    border-color: #b8daff;
+    color: #004085;
+}
+
+#okBtn {
+    font-weight: 500;
+    padding: 0.375rem 2rem;
+}
+
+/* Additional styles for mobile */
+@media (max-width: 768px) {
+    .main-title, .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .membership-status {
+        font-size: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .no-videos-message {
+        font-size: 0.9rem;
+    }
+    
+    .locked-message {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-title {
+        font-size: 2.2rem;
+    }
+    .section-title {
+        font-size: 1.3rem;
+    }
+}
+</style>
+{% endblock %}

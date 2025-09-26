@@ -1,0 +1,670 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<!-- Basic -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+	<title>Be Her Best</title>
+
+	<meta name="keywords" content="Be her best" />
+	<meta name="description" content="full sex thechniq guide">
+	<meta name="author" content="ethiopian sex">
+
+	<!-- Favicon -->
+	<link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon" />
+	<link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+
+	<!-- Mobile Metas -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no">
+
+	<!-- Web Fonts  -->
+	<link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800%7COpen+Sans:400,700,800"
+		rel="stylesheet" type="text/css">
+
+	<!-- Essential Vendor CSS -->
+	<link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+	<link rel="stylesheet" href="{% static 'vendor/animate/animate.min.css' %}">
+	<link rel="stylesheet" href="{% static 'vendor/owl.carousel/assets/owl.carousel.min.css' %}">
+	<link rel="stylesheet" href="{% static 'vendor/owl.carousel/assets/owl.theme.default.min.css' %}">
+	<link rel="stylesheet" href="{% static 'vendor/magnific-popup/magnific-popup.min.css' %}">
+
+	<!-- Essential Theme CSS -->
+	<link rel="stylesheet" href="{% static 'css/theme.css' %}">
+	<link rel="stylesheet" href="{% static 'css/theme-elements.css' %}">
+	<link rel="stylesheet" href="{% static 'css/demos/demo-landing.css' %}">
+	<link rel="stylesheet" href="{% static 'css/skins/skin-landing.css' %}">
+	<link rel="stylesheet" href="{% static 'css/custom.css' %}">
+
+	<!-- Head Libs -->
+	<script src="{% static 'vendor/modernizr/modernizr.min.js' %}"></script>
+
+</head>
+
+<body class="alternative-font-4 loading-overlay-showing" data-plugin-page-transition data-loading-overlay
+	data-plugin-options="{'hideDelay': 100}">
+	<div class="loading-overlay">
+		<div class="bounce-loader">
+			<div class="bounce1"></div>
+			<div class="bounce2"></div>
+			<div class="bounce3"></div>
+		</div>
+	</div>
+
+	<div class="body">
+		<header id="header" class="header-transparent header-effect-shrink"
+			data-plugin-options="{'stickyEnabled': true, 'stickyEffect': 'shrink', 'stickyEnableOnBoxed': false, 'stickyEnableOnMobile': true, 'stickyStartAt': 70, 'stickyChangeLogo': false, 'stickyHeaderContainerHeight': 70}">
+			<div class="header-body border-top-0 bg-dark box-shadow-none">
+				<div class="header-container container">
+					<div class="header-row">
+						<div class="header-column">
+							<div class="header-row">
+								<div class="header-logo appear-animation" data-appear-animation="fadeIn"
+									data-plugin-options="{'accY': 100}">
+									<a href="#" class="goto-top"><img alt="Be her best" width="82" height="36"
+											data-sticky-width="62" data-sticky-height="26" data-sticky-top="0"
+											src="{% static 'img/lazy.png' %}" data-plugin-lazyload
+											data-plugin-options="{'threshold': 500}"
+											data-original="{% static 'img/landing/logo.png' %}"></a>
+								</div>
+							</div>
+						</div>
+						<div class="header-column justify-content-end">
+							<div class="header-row">
+								<div
+									class="header-nav header-nav-links header-nav-light-text header-nav-dropdowns-dark">
+									<div class="header-nav-main header-nav-main-square header-nav-main-dropdown-no-borders header-nav-main-text-capitalize header-nav-main-text-size-2 header-nav-main-mobile-dark header-nav-main-effect-1 header-nav-main-sub-effect-1 appear-animation"
+										data-appear-animation="fadeIn" data-plugin-options="{'accY': 100}">
+										<nav class="collapse">
+											<ul class="nav nav-pills" id="mainNav">
+													<li>
+														{% if user.is_authenticated %}
+															{% if user.is_active %}
+																<a class="nav-link" href="{% url 'video_streaming_course' %}">Courses</a>
+															{% else %}
+																<a class="nav-link" href="#" 
+																   onclick="alert('Your account is pending activation. Please wait for admin approval.'); return false;">Courses</a>
+															{% endif %}
+														{% else %}
+															<a class="nav-link" href="{% url 'login' %}?next={% url 'video_streaming_course' %}">Courses</a>
+														{% endif %}
+													</li>
+												<li>
+													<a class="nav-link" data-hash data-hash-offset="130" href="{% url 'register' %}">
+														መፅሃፍት
+													</a>
+												</li>
+												<li>
+													<a class="nav-link font-weight-bold text-lg" href="{% url 'free_course' %}">
+														ነፃ ኮርስ
+													</a>
+												</li>
+												<li>
+													<a class="nav-link" href="{% url 'login' %}">
+														Log in
+													</a>
+												</li>
+
+											</ul>
+										</nav>
+									</div>
+									<a class="btn btn-gradient btn-rounded font-weight-semibold px-4 ml-3 appear-animation"
+										data-appear-animation="fadeIn" data-plugin-options="{'accY': 100}"
+										href="{% url 'register' %}">ኣሁኑኑ ኮርሶቹን ይጀምሩ።</a>
+									<button class="btn header-btn-collapse-nav" data-toggle="collapse"
+										data-target=".header-nav-main nav"><i class="fa fa-bars"></i></button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<div role="main" class="main">
+			<section
+				class="section section-concept section-no-border section-dark section-angled section-angled-reverse pt-5 m-0"
+				id="section-concept"
+				style="background-size: cover; background-position: center; animation-duration: 750ms; animation-delay: 300ms; animation-fill-mode: forwards;"
+				data-plugin-lazyload data-plugin-options="{'threshold': 500}" data-original="{% static 'img/landing/header_bg.jpg' %}">
+				<div class="section-angled-layer-bottom bg-light" style="padding: 8rem 0;"></div>
+				<div class="container pt-5 mt-5">
+					<div class="row align-items-center pt-3">
+						<div class="col-lg-5 mb-5">
+							<h5 class="text-primary font-weight-bold mb-1 appear-animation"
+								data-appear-animation="fadeInUpShorter" data-appear-animation-duration="750"></h5>
+							<h1 class="font-weight-bold text-12 line-height-2 mb-3 appear-animation"
+								data-appear-animation="fadeInUpShorter" data-appear-animation-delay="400"
+								data-appear-animation-duration="750">
+								የሷ የምንጊዜ ምርጫ ሁን!!
+								<span class="appear-animation" data-appear-animation="fadeInRightShorter"
+									data-appear-animation-delay="600" data-appear-animation-duration="800">
+									<span class="d-inline-block text-primary highlighted-word highlighted-word-rotate highlighted-word-animation-1 
+											   alternative-font-3 font-weight-bold ml-2" style="font-size: 40%;">ኣ ስ ደ ስ ታ ት</span>
+								</span>
+							</h1>
+
+							<p class="custom-font-size-1 appear-animation" data-appear-animation="fadeInUpShorter"
+								data-appear-animation-delay="900" data-appear-animation-duration="750"
+								style="font-size: 24px; font-weight: bold;">
+								ምርጥ የወሲብ ዘዴዎች ተማር
+								<a class="btn btn-gradient btn-rounded font-weight-semibold px-4 ml-3 appear-animation"
+									data-appear-animation="fadeIn" data-plugin-options="{'accY': 100}"
+									href="{% url 'index' %}" target="_blank">ነፃ(free) ኮርስ</a>
+								<button class="btn header-btn-collapse-nav" data-toggle="collapse"
+									data-target=".header-nav-main nav"><i class="fa fa-bars"></i></button>
+								<!-- <a href="#intro" data-hash data-hash-offset="120"
+									class="text-color-light font-weight-semibold text-1 d-block">
+									VIEW MORE <i class="fa fa-long-arrow-alt-right ml-1"></i>
+								</a> -->
+							</p>
+
+							<a class="video-open lightbox d-block text-color-light appear-animation"
+								href="#popup-content-1" data-appear-animation="fadeInUpShorter"
+								data-appear-animation-delay="1100" data-appear-animation-duration="750"
+								data-plugin-options="{'type':'inline'}">
+								<div class="video-open-icon"></div>See How ?
+							</a>
+
+							<div id="popup-content-1"
+								class="dialog dialog-lg zoom-anim-dialog rounded p-3 mfp-hide mfp-close-out">
+								<div class="embed-responsive embed-responsive-4by3">
+									<video id="popup-video" width="100%" height="100%" autoplay muted loop controls playsinline preload="metadata">
+										<source src="{% static 'static/video/presentation.mp4' %}" type="video/mp4">
+										Your browser does not support the video tag.
+									</video>
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-6 offset-lg-1 mb-5 appear-animation" data-appear-animation="fadeIn"
+							data-appear-animation-delay="1200" data-appear-animation-duration="750">
+							<div class="border-width-10 border-color-light clearfix border border-radius">
+								<video id="hero-video" class="float-left" width="100%" height="100%" autoplay muted loop playsinline preload="metadata">
+									<source src="{% static 'video/presentation.mp4' %}" type="video/mp4">
+									Your browser does not support the video tag.
+								</video>
+							</div>
+						</div>
+						<div class="col-md-8 col-lg-6 col-xl-5 custom-header-bar py-4 pr-5 appear-animation z-index-2"
+							data-appear-animation="maskRight" data-appear-animation-delay="1200"
+							data-appear-animation-duration="750">
+							<div class="appear-animation" data-appear-animation="fadeInRightShorter"
+								data-appear-animation-delay="1500">
+								<div
+									class="star-rating-wrap d-flex align-items-center justify-content-center position-relative text-dark text-5 py-2 mb-2">
+									<i class="fas fa-star"></i><i class="fas fa-star ml-1"></i><i
+										class="fas fa-star ml-1"></i><i class="fas fa-star ml-1"></i><i
+										class="fas fa-star ml-1"></i>
+								</div>
+
+								<h4 class="position-relative text-center font-weight-bold text-7 line-height-2 mb-0">
+									ያንተ እንድትሆን ሚረዳህ መንገድ</h4>
+
+								<p class="position-relative text-center font-weight-normal mb-1">ከመቼውም ጊዜ በላይ እርሷን ማርካት
+									ከቻልክ እና እርሷን ከማንም ማግኘት ማትችለውን ደስታ ከሰጠሃት ኣንተ ከመቼውም ጊዜ በላይ የእሷ ምርጥ ትሆናለህ። ሚስጥሩ ቴክኒክ ነው።
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section id="intro" class="section section-no-border section-angled bg-light pt-0 pb-5 m-0">
+				<div class="section-angled-layer-bottom section-angled-layer-increase-angle bg-color-light-scale-1"
+					style="padding: 21rem 0;"></div>
+				<div class="container pb-5" style="min-height: 1000px;">
+					<div class="row mb-5 pb-lg-3 counters">
+						<div class="col-lg-10 text-center offset-lg-1">
+							<h2 class="font-weight-bold text-9 mb-0 appear-animation"
+								data-appear-animation="fadeInUpShorter" data-appear-animation-duration="750"
+								data-plugin-options="{'accY': -200}">የሷ የምንጊዜ ምርጫ ለመሆን<br>ተዘጋጅተሃል ?</h2>
+							<p class="sub-title text-primary text-4 font-weight-semibold positive-ls-2 mt-2 mb-4 appear-animation"
+								data-appear-animation="fadeInUpShorter" data-appear-animation-delay="400"
+								data-appear-animation-duration="750"> እስዋን ምታረካበት መንገድ <span
+									class="highlighted-word highlighted-word-animation-1 highlighted-word-animation-1-2 highlighted-word-animation-1 highlighted-word-animation-1-no-rotate alternative-font-4 font-weight-semibold line-height-2 pb-2">A
+									NEW LEVEL</span></p>
+							<p class="text-1rem text-color-default negative-ls-05 pt-3 pb-4 mb-5 appear-animation"
+								data-appear-animation="fadeInUpShorter" data-appear-animation-delay="500"
+								data-appear-animation-duration="750">
+								እንደ ማሽኮርመም፣ የፊንገሪንግ፣ የቃል፣ የእጅ ጣት፣ ሰርጎ መግባት እና በርካታ እርካታ ያሉት የወሲብ ቴክኒኮችን ለመቆጣጠር ምርጡ ሳንሱር
+								ያልተደረገበት የቪዲዮ ኮርስ</p>
+						</div>
+						<div class="col-sm-6 col-lg-4 offset-lg-2 counter mb-5 mb-md-0">
+							<div class="appear-animation" data-appear-animation="fadeInLeftShorter"
+								data-appear-animation-delay="750" data-appear-animation-duration="750">
+								<h3 class="font-weight-extra-bold text-14 line-height-1 mb-2" data-to="50"
+									data-append="+">0</h3>
+								<label class="font-weight-semibold negative-ls-1 text-color-dark mb-0">ቪድዮዎች</label>
+								<p class="text-color-grey font-weight-semibold pb-1 mb-2">በቪድዮ የታገዘ ትምህርት</p>
+								<p class="mb-0"><a href="{% url 'register' %}" data-hash data-hash-offset="120"
+										class="text-color-primary d-flex align-items-center justify-content-center text-4 font-weight-semibold text-decoration-none">ቪድዮዎች ተመልከት <i class="fas fa-long-arrow-alt-right ml-2 text-4 mb-0"></i></a></p>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-4 counter divider-left-border">
+							<div class="appear-animation" data-appear-animation="fadeInRightShorter"
+								data-appear-animation-delay="750" data-appear-animation-duration="750">
+								<h3 class="font-weight-extra-bold text-14 line-height-1 mb-2" data-to="35"
+									data-append="+">0</h3>
+								<label class="font-weight-semibold negative-ls-1 text-color-dark mb-0">የተለያዩ
+									መፅሃፍት</label>
+								<p class="text-color-grey font-weight-semibold pb-1 mb-2">ከነ QR ኮድ </p>
+								<p class="mb-0"><a
+										href="{% url 'register' %}"
+										class="text-color-primary d-flex align-items-center justify-content-center text-4 font-weight-semibold text-decoration-none"
+										target="_blank">Books <i
+											class="fas fa-long-arrow-alt-right ml-2 text-4 mb-0"></i></a></p>
+							</div>
+						</div>
+					</div>
+					<div class="intro row align-items-center justify-content-center justify-content-md-start">
+						<div class="col-3 pr-0 pl-3 z-index-2">
+							<img src="{% static 'img/lazy.png' %}" data-plugin-lazyload
+								data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+								data-original="{% static 'img/landing/intro2.jfif' %}"
+								class="img-fluid border border-width-10 border-color-light box-shadow-3 rounded d-none d-md-block appear-animation"
+								alt="Screenshot 2" data-appear-animation="fadeInUp" data-appear-animation-delay="600">
+							<div class="position-absolute d-none d-md-flex align-items-end appear-animation"
+								data-appear-animation="fadeInLeftShorter" data-appear-animation-delay="900"
+								style="bottom: -60px; right: -90px;">
+								<span class="arrow hlt" style="margin-right: -70px;"></span>
+								<strong class="text-color-white mb-4 pb-3" style="color: white; font-size: 1.9em;">ከ ዚ ህ</strong>
+							</div>
+						</div>
+						<div class="col-11 col-md-9 pl-0 pr-5 pb-5 pb-md-0 mb-5 mb-md-0">
+							<div class="intro2 pt-5 pt-md-0 mt-5 mt-lg-0 appear-animation pr-5"
+								data-appear-animation="fadeInUp" data-appear-animation-delay="400"><img
+									src="{% static 'img/lazy.png' %}" data-plugin-lazyload
+									data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+									data-original="{% static 'img/landing/intro3.jpg' %}"
+									class="img-fluid box-shadow-3 position-relative z-index-1 rounded"
+									alt="Screenshot 1" style="left: -110px;"></div>
+							<div class="intro3 z-index-3 position-absolute appear-animation"
+								data-appear-animation="fadeInUp" data-appear-animation-delay="800"
+								style="top: 20%; right: 4%;">
+								<img src="{% static 'img/lazy.png' %}" data-plugin-lazyload
+									data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+									data-original="{% static 'img/landing/intro1.jpg' %}"
+									class="img-fluid border border-width-10 border-color-light box-shadow-3 rounded"
+									alt="Screenshot 3">
+								<div class="position-absolute d-none d-md-flex align-items-end appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="1100"
+									style="bottom: -135px; right: -20px;">
+									<strong class="text-color-dark mb-3">a lot of demos!</strong>
+									<span class="arrow hru"></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section section-no-border pb-0 m-0">
+				<div class="container">
+					<div class="row align-items-center justify-content-between">
+						<div class="col-lg-4">
+							<h2 class="text-7 font-weight-semibold line-height-2 mb-2">"ሚስጥሩ ቴክኒክ ነው።" </h2>
+						</div>
+						<div class="col-sm-4 col-lg-auto icon-box text-center mb-4">
+							<i class="icon-bg icon-1"></i>
+							<h4 class="font-weight-bold custom-font-size-2 line-height-3 mb-0">Super High<br>Performance
+							</h4>
+						</div>
+						<!-- <div class="col-sm-4 col-lg-auto icon-box text-center mb-4">
+							<i class="icon-bg icon-confidence"></i>
+							<h4 class="font-weight-bold custom-font-size-2 line-height-3 mb-0">Created with
+								Top<br>Plugins and Extensions</h4>
+						</div> -->
+						<div class="col-sm-4 col-lg-auto icon-box text-center mb-4">
+							<i class="icon-bg icon-3"></i>
+							<h4 class="font-weight-bold custom-font-size-2 line-height-3 mb-0">Extremely Easy<br>to
+								Control Her</h4>
+						</div>
+						<div class="col-sm-12">
+							<hr class="my-5">
+							<h2 class="font-weight-bold text-center text-10 pt-3 mb-4">ማለቂያ ለሌለው እርካታ፣ አእምሮን የሚነፍስ ግንኙነት
+								እና ዘላቂ መተማመን (self confidence)</h2>
+						</div>
+						
+					</div>
+					<div class="col-lg-10 offset-lg-1 mb-5 appear-animation" data-appear-animation="fadeIn"
+						data-appear-animation-delay="1200" data-appear-animation-duration="750">
+						<div class="border-width-10 border-color-light clearfix border border-radius text-center">
+							<video id="section-video" class="mx-auto" width="100%" height="100%" autoplay muted loop playsinline preload="metadata">
+								<source src="{% static 'video/presentation.mp4' %}" type="video/mp4">
+								Your browser does not support the video tag.
+							</video>
+						</div>
+
+					</div>
+				</div>
+			</section>
+
+			<section class="section section-no-border section-angled section-dark pb-0 m-0"
+				style="background-repeat: no-repeat; background-color: #0169fe !important;" data-plugin-lazyload
+				data-plugin-options="{'threshold': 500}" data-original="{% static 'img/landing/reason_bg.png' %}">
+				<div class="section-angled-layer-top section-angled-layer-increase-angle bg-color-light-scale-1"
+					style="padding: 4rem 0;"></div>
+				<div class="spacer py-md-4 my-md-5"></div>
+				<div class="container pt-5 mt-5">
+					<div class="row align-items-center pt-md-5 mt-5">
+						<div class="col-lg-6 offset-lg-1 mb-5">
+							
+							<div class="text-reasons">
+								<label class="text-color-light appear-animation z-index-1"
+									data-appear-animation="blurIn" data-appear-animation-delay="250"
+									data-appear-animation-duration="750">6</label>
+								<h3 class="text-4 text-md-6 appear-animation" data-appear-animation="fadeInRightShorter"
+									data-appear-animation-delay="450" data-appear-animation-duration="750">እነዚህ ኮርሶች
+								</h3>
+								<h3 class="text-4 text-md-6 appear-animation" data-appear-animation="fadeInRightShorter"
+									data-appear-animation-delay="750" data-appear-animation-duration="750">ለማን ?  
+									 ለማን
+									ይጠቅማሉ?</h3>
+								<h3 class="text-4 text-md-6 appear-animation" data-appear-animation="fadeInRightShorter"
+									data-appear-animation-delay="950" data-appear-animation-duration="750"><span
+										class="highlight-word light">ወሲብ</span></h3>
+							</div>
+						</div>
+						<div class="col-lg-5 col-xl-4 pl-lg-4 pl-xl-5 mb-5">
+							<h2 class="text-6 font-weight-semibold line-height-2 mb-2 appear-animation"
+								data-appear-animation="fadeInRightShorter" data-appear-animation-delay="1150"
+								data-appear-animation-duration="750">With This course your satisfaction is guaranteed.</h2>
+							<p class="custom-text-color-1 line-height-5 appear-animation"
+								data-appear-animation="fadeInRightShorter" data-appear-animation-delay="1350"
+								data-appear-animation-duration="750"></p>
+						</div>
+					</div>
+					<div class="row justify-content-center mt-md-5 mb-4 pt-lg-4">
+						<div class="col-lg-11">
+							<div class="row justify-content-center">
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="600"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason1.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">1</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">Married
+												Man</small>ያገቡ ወንዶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">የትዳር ግንኙነታችውን ማጠንከር ሚፈልጉ ለሚስታቸው ደስታ፣ ለራሳቸው እርካታ
+									</p>
+								</div>
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="800"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason2.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">2</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">Unexprenced
+												Guys</small>
+											ልምድ የሌላቸው ወንዶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">በአልጋ ላይ በቂ መሆናቸውን መጠራጠር ማስወገድ ሚፈልጉ.</p>
+								</div>
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="1000"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason3.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">3</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">Couples
+											</small>ኣዲስ ነገር መሞከር ሚፈልጉ ጥንዶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">ኣንዳቸው የላቸውን ፍላጎት ትረድተው የሚስቶቻቸው ፍላጎት ማርካት ሚፈልጉ
+									</p>
+								</div>
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="300"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason4.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">4</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">Exprenced Guys
+											</small>ልምድ ያላቸው ወንዶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">ጥሩ ናቸው ብለው ያስባሉ! ነገር ግን እነሱ በእርግጠጝነት መሆናቸውን
+										የሚያውቁበት መንገድ </p>
+								</div>
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="500"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason5.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">5</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">Single
+												guys</small>Single ወንዶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">ከመጀመሪያው ግንኙነት በኋላ በሚቀጥለው ሚስት ለማግኘት ሚፈልጉ
+									</p>
+								</div>
+								<div class="col-10 col-sm-6 col-lg-4 image-box appear-animation"
+									data-appear-animation="fadeInUpShorter" data-appear-animation-delay="700"
+									data-appear-animation-duration="750">
+									<img class="img-fluid" alt="Speed Performance" src="{% static 'img/lazy.png' %}"
+										data-plugin-lazyload data-plugin-options="{'threshold': 500, 'effect':'fadeIn'}"
+										data-original="{% static 'img/landing/reason6.jpg' %}">
+									<div class="d-flex align-items-center mb-2">
+										<span
+											class="text-color-dark font-weight-extra-bold text-12 mr-2 line-height-1">6</span>
+										<h4 class="d-flex flex-column font-weight-bold text-5 mb-0"><small
+												class="font-weight-semibold positive-ls-2 line-height-1">ALL
+												Girls</small>ሁሉም ሴቶች</h4>
+									</div>
+									<p class="pr-5 custom-text-color-1">የራሳቸውን ደስታ እና የጾታ እርካታ በባለቤትነት ለመያዝ የሚፈልጉ</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="text-center">
+						<a href="{% url 'register' %}" class="btn btn-dark btn-rounded text-3" style="display: inline-block; margin: 0 auto; font-size: 2rem; font-weight: bold; color: red; padding: 1rem 2rem;" target="_blank">ኣሁኑኑ ይማሩ!</a>
+					</div>
+				</div>
+			</section>
+		</div>
+		<footer id="footer"
+			class="bg-color-dark-scale-2 border border-right-0 border-left-0 border-bottom-0 border-color-light-3 mt-0">
+			<div class="container text-center my-3 py-5">
+				<a href="{% url 'index' %}" class="goto-top">
+					<img src="{% static 'img/landing/logo.png' %}" width="40" height="45" class="mb-4 appear-animation"
+						alt="Porto" data-appear-animation="fadeIn" data-appear-animation-delay="300">
+				</a>
+				<p class="text-4 mb-4">የሷ የምንጊዜ ምርጫ ሁን!!! .  <a
+						href="{% url 'register' %}" class="text-color-light" target="_blank">ኣሁኑኑ ጀምር።</a>
+				</p>
+				
+			</div>
+			<div class="copyright bg-dark py-4">
+				<div class="container text-center py-2">
+					<p class="mb-0 text-2">Copyright 2025- Be Her Best - All Rights Reserved</p>
+				</div>
+			</div>
+		</footer>
+	</div>
+
+	<!-- Essential Vendor Scripts -->
+	<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+	<script src="{% static 'vendor/jquery.appear/jquery.appear.min.js' %}"></script>
+	<script src="{% static 'vendor/jquery.easing/jquery.easing.min.js' %}"></script>
+	<script src="{% static 'vendor/popper/umd/popper.min.js' %}"></script>
+	<script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'vendor/common/common.min.js' %}"></script>
+	<script src="{% static 'vendor/jquery.lazyload/jquery.lazyload.min.js' %}"></script>
+	<script src="{% static 'vendor/isotope/jquery.isotope.min.js' %}"></script>
+	<script src="{% static 'vendor/owl.carousel/owl.carousel.min.js' %}"></script>
+	<script src="{% static 'vendor/magnific-popup/jquery.magnific-popup.min.js' %}"></script>
+
+	<!-- Theme Base, Components and Settings -->
+	<script src="{% static 'js/theme.js' %}"></script>
+
+	<!-- Theme Custom -->
+	<script src="{% static 'js/custom.js' %}"></script>
+
+	<!-- Theme Initialization Files -->
+	<script src="{% static 'js/theme.init.js' %}"></script>
+
+	<!-- Video Autoplay Enhancement -->
+	<script>
+		$(document).ready(function() {
+			// Function to force video autoplay
+			function forceVideoAutoplay() {
+				const videos = document.querySelectorAll('video[autoplay]');
+				
+				videos.forEach(function(video) {
+					// Ensure video is muted for autoplay compliance
+					video.muted = true;
+					video.setAttribute('playsinline', 'true');
+					
+					// Try to play the video
+					const playPromise = video.play();
+					
+					if (playPromise !== undefined) {
+						playPromise.then(function() {
+							console.log('Video autoplay started successfully for:', video.id || 'unnamed video');
+						}).catch(function(error) {
+							console.log('Video autoplay failed for:', video.id || 'unnamed video', error);
+							// Fallback: try to play on user interaction
+							document.addEventListener('click', function() {
+								video.play().catch(e => console.log('Manual play failed:', e));
+							}, { once: true });
+						});
+					}
+				});
+			}
+			
+			// Initial autoplay attempt
+			forceVideoAutoplay();
+			
+			// Additional autoplay attempt after page load
+			$(window).on('load', function() {
+				setTimeout(forceVideoAutoplay, 500);
+			});
+			
+			// Handle popup video autoplay when opened
+			$('.video-open').on('click', function() {
+				setTimeout(function() {
+					const popupVideo = document.getElementById('popup-video');
+					if (popupVideo) {
+						popupVideo.muted = true;
+						popupVideo.play().catch(e => console.log('Popup video play failed:', e));
+					}
+				}, 100);
+			});
+			
+			// Intersection Observer for lazy autoplay
+			if ('IntersectionObserver' in window) {
+				const videoObserver = new IntersectionObserver(function(entries) {
+					entries.forEach(function(entry) {
+						if (entry.isIntersecting) {
+							const video = entry.target;
+							if (video.paused) {
+								video.muted = true;
+								video.play().catch(e => console.log('Intersection play failed:', e));
+							}
+						}
+					});
+				}, { threshold: 0.3 });
+				
+				// Observe all autoplay videos
+				document.querySelectorAll('video[autoplay]').forEach(function(video) {
+					videoObserver.observe(video);
+				});
+			}
+		});
+	</script>
+
+
+</body>
+
+</html>			function forceVideoAutoplay() {
+				const videos = document.querySelectorAll('video[autoplay]');
+				
+				videos.forEach(function(video) {
+					// Ensure video is muted for autoplay compliance
+					video.muted = true;
+					video.setAttribute('playsinline', 'true');
+					
+					// Try to play the video
+					const playPromise = video.play();
+					
+					if (playPromise !== undefined) {
+						playPromise.then(function() {
+							console.log('Video autoplay started successfully for:', video.id || 'unnamed video');
+						}).catch(function(error) {
+							console.log('Video autoplay failed for:', video.id || 'unnamed video', error);
+							// Fallback: try to play on user interaction
+							document.addEventListener('click', function() {
+								video.play().catch(e => console.log('Manual play failed:', e));
+							}, { once: true });
+						});
+					}
+				});
+			}
+			
+			// Initial autoplay attempt
+			forceVideoAutoplay();
+			
+			// Additional autoplay attempt after page load
+			$(window).on('load', function() {
+				setTimeout(forceVideoAutoplay, 500);
+			});
+			
+			// Handle popup video autoplay when opened
+			$('.video-open').on('click', function() {
+				setTimeout(function() {
+					const popupVideo = document.getElementById('popup-video');
+					if (popupVideo) {
+						popupVideo.muted = true;
+						popupVideo.play().catch(e => console.log('Popup video play failed:', e));
+					}
+				}, 100);
+			});
+			
+			// Intersection Observer for lazy autoplay
+			if ('IntersectionObserver' in window) {
+				const videoObserver = new IntersectionObserver(function(entries) {
+					entries.forEach(function(entry) {
+						if (entry.isIntersecting) {
+							const video = entry.target;
+							if (video.paused) {
+								video.muted = true;
+								video.play().catch(e => console.log('Intersection play failed:', e));
+							}
+						}
+					});
+				}, { threshold: 0.3 });
+				
+				// Observe all autoplay videos
+				document.querySelectorAll('video[autoplay]').forEach(function(video) {
+					videoObserver.observe(video);
+				});
+			}
+		});
+	</script>
+
+
+</body>
+
+</html>

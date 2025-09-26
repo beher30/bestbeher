@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .course-header {
+        background: linear-gradient(to right, #212529, #343a40);
+        padding: 3rem 0;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .course-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .course-description {
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        opacity: 0.9;
+    }
+    
+    .video-card {
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .video-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .video-thumbnail {
+        position: relative;
+        overflow: hidden;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        background-color: #000;
+    }
+    
+    .video-thumbnail img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .video-card:hover .video-thumbnail img {
+        transform: scale(1.05);
+    }
+    
+    .play-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background-color: rgba(255, 193, 7, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #212529;
+        font-size: 24px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .video-card:hover .play-icon {
+        opacity: 1;
+    }
+    
+    .video-info {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .video-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #212529;
+    }
+    
+    .video-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #adb5bd;
+    }
+    
+    .video-duration {
+        display: flex;
+        align-items: center;
+    }
+    
+    .video-duration i {
+        margin-right: 0.3rem;
+    }
+    
+    .video-date {
+        display: flex;
+        align-items: center;
+    }
+    
+    .video-date i {
+        margin-right: 0.3rem;
+    }
+    
+    .watch-btn {
+        display: inline-block;
+        background: linear-gradient(45deg, #ff4081, #e91e63);
+        color: #fff;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        margin-top: 1rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+    }
+    
+    .watch-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(233, 30, 99, 0.4);
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-text {
+        font-size: 1.2rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Course Header -->
+<div class="course-header">
+    <div class="container">
+        <h1 class="course-title">{{ title }}</h1>
+        <p class="course-description">{{ description }}</p>
+    </div>
+</div>
+
+<!-- Video Grid -->
+<div class="container mb-5">
+    {% if videos %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for video in videos %}
+                <div class="col">
+                    <div class="video-card">
+                        <a href="{% url 'free_video_player' video.id %}" style="text-decoration:none; color:inherit;">
+                            <div class="video-thumbnail">
+                                {% with thumbnail_url=video.get_thumbnail_url %}
+                                    {% if thumbnail_url and thumbnail_url != '/static/img/default-thumbnail.jpg' %}
+                                        <img src="{{ thumbnail_url }}" alt="" onerror="this.onerror=null;this.src='{% static 'img/video-placeholder.jpg' %}'">
+                                    {% else %}
+                                        <img src="{% static 'img/video-placeholder.jpg' %}" alt="">
+                                    {% endif %}
+                                {% endwith %}
+                                <div class="play-icon">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="video-info">
+                            <h3 class="video-title">{{ video.title }}</h3>
+                            <p class="video-description">
+                                {% if video.description %}
+                                    {{ video.description|truncatechars:120 }}
+                                {% else %}
+                                    No description available.
+                                {% endif %}
+                            </p>
+                            <div class="video-meta">
+                                <div class="video-duration">
+                                    <i class="fas fa-clock"></i> {{ video.duration|default:"00:00" }}
+                                </div>
+                                <div class="video-date">
+                                    <i class="fas fa-calendar-alt"></i> {{ video.created_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-video-slash"></i>
+            </div>
+            <p class="empty-text">No free videos available at the moment. Please check back later.</p>
+            <a href="{% url 'index' %}" class="btn btn-primary">Back to Home</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

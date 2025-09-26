@@ -1,0 +1,140 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Add Free Video{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Add Free Video</h4>
+                </div>
+                <div class="card-body">
+                    <form id="addVideoForm" method="post" action="{% url 'add_video_form' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Video Link (URL)</label>
+                            <input type="url" class="form-control" id="url" name="url" required>
+                            <small class="text-muted">Enter a direct video URL (YouTube, Vimeo, etc.)</small>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Video</button>
+                        <a href="{% url 'video_management' %}" class="btn btn-secondary ms-2">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Video added successfully!
+        </div>
+    </div>
+    
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            An error occurred while adding the video.
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addVideoForm = document.getElementById('addVideoForm');
+    const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+    
+    // Handle form submission
+    addVideoForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(addVideoForm);
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Send AJAX request
+        fetch(addVideoForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success toast
+                document.querySelector('#successToast .toast-body').textContent = data.message || 'Video added successfully to free course';
+                successToast.show();
+                
+                // Reset form
+                addVideoForm.reset();
+                
+                // Redirect after delay
+                setTimeout(() => {
+                    window.location.href = "{% url 'video_management' %}";
+                }, 2000);
+            } else {
+                // Show error toast
+                document.querySelector('#errorToast .toast-body').textContent = data.message || 'An error occurred while adding the video';
+                errorToast.show();
+            }
+        })
+        .catch(error => {
+            // Show error toast
+            document.querySelector('#errorToast .toast-body').textContent = 'An error occurred while processing your request. Please try again.';
+            errorToast.show();
+            console.error('Error:', error);
+        });
+    });
+    
+    // Check for Django messages
+    {% if messages %}
+        {% for message in messages %}
+            (function() {
+                var messageType = '{% if message.tags %}{{ message.tags|escapejs }}{% endif %}';
+                var messageText = '{{ message|escapejs }}';
+                var toastElement = messageType === 'success' ? document.getElementById('successToast') : document.getElementById('errorToast');
+                if (toastElement) {
+                    var toastBody = toastElement.querySelector('.toast-body');
+                    if (toastBody) {
+                        toastBody.textContent = messageText;
+                        new bootstrap.Toast(toastElement).show();
+                    }
+                }
+            })();
+        {% endfor %}
+    {% endif %}
+});
+</script>
+{% endblock %}

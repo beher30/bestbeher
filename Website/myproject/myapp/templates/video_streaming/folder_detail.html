@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ folder.name }}</h1>
+            <span class="badge bg-{{ folder.membership_tier }}">
+                {{ folder.get_membership_tier_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for video in videos %}
+        <div class="col">
+            <div class="card h-100">
+                {% if video.thumbnail_url %}
+                <img src="{{ video.thumbnail_url }}" class="card-img-top" alt="{{ video.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Duration: {{ video.duration|default:"Unknown" }}<br>
+                            Added: {{ video.created_at|date:"M d, Y" }}
+                        </small>
+                    </p>
+                    <a href="{% url 'video_player' video.id %}" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Watch Video
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No videos available in this folder.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

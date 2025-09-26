@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .video-info {
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #1a202c;
+    }
+    
+    .video-description {
+        color: #4a5568;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    
+    .video-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    
+    .nav-button {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(45deg, #ffc107, #ff9800);
+        color: #212529;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+    }
+    
+    .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+        color: #212529;
+    }
+    
+    .nav-button.disabled {
+        background: #e9ecef;
+        color: #adb5bd;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    
+    .nav-button.disabled:hover {
+        transform: none;
+    }
+    
+    .nav-button i {
+        margin-right: 8px;
+    }
+    
+    .nav-button.next i {
+        margin-right: 0;
+        margin-left: 8px;
+    }
+    
+    /* Direct link section */
+    .direct-link-section {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .direct-link-button {
+        display: inline-block;
+        background-color: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .direct-link-button:hover {
+        background-color: #218838;
+        color: white;
+    }
+    
+    /* Player container */
+    .player-container {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    }
+    
+    .plyr {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Error message */
+    .error-message {
+        padding: 20px;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-radius: 8px;
+        margin-top: 20px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-4">
+    <div class="video-container">
+        <!-- Loading indicator -->
+        <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; z-index: 5;">
+            <div class="spinner-border text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Error message -->
+        <div id="error-message" class="error-message">
+            <p>There was an error loading the video. Please try the direct link below.</p>
+        </div>
+        
+        <!-- Video player -->
+        <div class="player-container">
+            <video id="player" playsinline controls data-poster="{{ thumbnail_url }}">
+                <source src="{{ streaming_url }}" type="video/mp4" />
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        
+        <!-- Direct link section (initially hidden) -->
+        <div id="direct-link-section" class="direct-link-section" style="display: none;">
+            <p>If the video doesn't play automatically, you can access it directly:</p>
+            <a href="{{ streaming_url }}" target="_blank" class="direct-link-button">
+                <i class="fas fa-external-link-alt"></i> Open Video in New Tab
+            </a>
+        </div>
+    </div>
+    
+    <div class="video-info">
+        <h1 class="video-title">{{ video.title }}</h1>
+        <div class="video-description">{{ video.description|linebreaks }}</div>
+        <div class="video-meta">
+            <span>Duration: {{ video.duration }}</span>
+        </div>
+        
+        <div class="navigation-buttons">
+            {% if previous_video %}
+                <a href="{% url 'free_video_player' previous_video.id %}" class="nav-button prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </a>
+            {% else %}
+                <span class="nav-button disabled prev">
+                    <i class="fas fa-chevron-left"></i> Previous Video
+                </span>
+            {% endif %}
+            
+            <a href="{% url 'free_course' %}" class="nav-button">
+                <i class="fas fa-th-list"></i> All Free Videos
+            </a>
+            
+            {% if next_video %}
+                <a href="{% url 'free_video_player' next_video.id %}" class="nav-button next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <span class="nav-button disabled next">
+                    Next Video <i class="fas fa-chevron-right"></i>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const videoUrl = "{{ streaming_url|escapejs }}";
+        const player = document.getElementById('player');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const directLinkSection = document.getElementById('direct-link-section');
+        
+        // Initialize Plyr
+        const plyrPlayer = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'fullscreen'],
+            autoplay: false
+        });
+        
+        // Function to hide loading indicator
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Function to show error message
+        function showError() {
+            errorMessage.style.display = 'block';
+            directLinkSection.style.display = 'block';
+        }
+        
+        // Check if it's a Mega.nz URL
+        const isMegaUrl = videoUrl.includes('mega.nz');
+        
+        // For Mega URLs, show direct link immediately
+        if (isMegaUrl) {
+            directLinkSection.style.display = 'block';
+        }
+        
+        // Handle player loading
+        plyrPlayer.on('ready', event => {
+            hideLoading();
+        });
+        
+        // Handle player errors
+        plyrPlayer.on('error', event => {
+            console.error('Video player error:', event);
+            hideLoading();
+            showError();
+        });
+        
+        // Set a timeout in case the video never loads
+        setTimeout(function() {
+            if (loadingIndicator.style.display !== 'none') {
+                hideLoading();
+                showError();
+            }
+        }, 8000); // 8 seconds timeout
+        
+        // Detect if the video source is not playable
+        player.addEventListener('error', function(e) {
+            console.error('HTML5 video error:', e);
+            hideLoading();
+            showError();
+        });
+    });
+</script>
+{% endblock %}

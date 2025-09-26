@@ -1,0 +1,11 @@
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'course_video_library' %}">Course Library</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'membership_upgrade' %}">Upgrade</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    {% else %} 

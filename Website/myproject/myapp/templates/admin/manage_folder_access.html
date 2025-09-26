@@ -1,0 +1,126 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Manage Folder Access - {{ folder.name }}</h1>
+    </div>
+
+    <!-- Current Access List -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Current Access</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Granted By</th>
+                            <th>Granted At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for access in access_list %}
+                        <tr>
+                            <td>{{ access.user.username }}</td>
+                            <td>{{ access.granted_by.username }}</td>
+                            <td>{{ access.granted_at }}</td>
+                            <td>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="revoke">
+                                    <input type="hidden" name="user_id" value="{{ access.user.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Revoke Access
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No custom access granted</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grant Access Form -->
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <select name="user_id" class="form-control" required>
+                            <option value="">Select User</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="hidden" name="action" value="grant">
+                        <button type="submit" class="btn btn-primary">
+                            Grant Access
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="card">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Pending Access Requests</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Requested At</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in pending_requests %}
+                        <tr>
+                            <td>{{ request.user.username }}</td>
+                            <td>{{ request.requested_at }}</td>
+                            <td>{{ request.notes }}</td>
+                            <td>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="grant">
+                                    <input type="hidden" name="user_id" value="{{ request.user.id }}">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        Approve
+                                    </button>
+                                </form>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <input type="hidden" name="request_id" value="{{ request.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No pending requests</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

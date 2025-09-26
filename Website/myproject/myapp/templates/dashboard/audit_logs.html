@@ -1,0 +1,124 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block title %}Audit Logs{% endblock %}
+
+{% block content %}
+<!-- Filters Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filter Audit Logs</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <!-- Action Type Filter -->
+            <div class="col-md-3">
+                <label for="action_type" class="form-label">Action Type</label>
+                <select name="action_type" id="action_type" class="form-select">
+                    <option value="">All Actions</option>
+                    {% for type, label in action_types %}
+                    <option value="{{ type }}" {% if current_filters.action_type == type %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- User Filter -->
+            <div class="col-md-3">
+                <label for="user_id" class="form-label">User</label>
+                <select name="user_id" id="user_id" class="form-select">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if current_filters.user_id == user.id|stringformat:"i" %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" 
+                       value="{{ current_filters.start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" 
+                       value="{{ current_filters.end_date|date:'Y-m-d' }}">
+            </div>
+
+            <!-- Filter Button -->
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="{% url 'audit_logs' %}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Reset Filters
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Audit Logs Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Audit Logs</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.timestamp|date:"M d, Y H:i" }}</td>
+                        <td>{{ activity.user.username }}</td>
+                        <td>
+                            <span class="badge bg-{{ activity.badge_color }}">
+                                {{ activity.action_type|title }}
+                            </span>
+                        </td>
+                        <td>{{ activity.action_detail }}</td>
+                        <td>{{ activity.ip_address|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if activity.status == 'success' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ activity.status|title }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No audit logs found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4e73df;
+    }
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+</style>
+{% endblock %}

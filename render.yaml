@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: beherbest
+    env: python
+    python:
+      version: 3.10.12
+    buildCommand: |
+      # Install Python and build dependencies
+      python -m pip install --upgrade pip setuptools wheel
+      
+      # Install dependencies from requirements.txt
+      pip install -r requirements.txt
+      
+      # Navigate to Django project directory
+      cd Website/myproject
+      
+      # Collect static files
+      python manage.py collectstatic --noinput --verbosity=0
+      
+      # Run migrations
+      python manage.py migrate
+    startCommand: cd Website/myproject && gunicorn myproject.wsgi:application --log-file -
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.12"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "myproject.settings"
+      - key: PYTHONPATH
+        value: "/opt/render/project/src/Website"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: DEBUG
+        value: "False"  # Set to False in production
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"  # Enable collectstatic
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: "4"
+      - key: ALLOWED_HOSTS
+        value: "beherbest.onrender.com,.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://beherbest.onrender.com,https://*.onrender.com"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: CSRF_COOKIE_SECURE
+        value: "True"
+      - key: SECURE_PROXY_SSL_HEADER
+        value: "HTTP_X_FORWARDED_PROTO,https"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: avyevexy_beherbest
+          property: connectionString
+      - key: DATABASE_NAME
+        value: "avyevexy_beherbest"
+      - key: DATABASE_USER
+        value: "avyevexy_id_rsa"
+
+databases:
+  - name: avyevexy_beherbest
+    databaseName: avyevexy_beherbest
+    user: avyevexy_id_rsa
+    plan: free
