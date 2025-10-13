@@ -44,8 +44,15 @@
     
     .navigation-buttons {
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
         margin-top: 20px;
+        gap: 12px;
+    }
+    
+    .nav-buttons-row {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
     }
     
     .nav-button, .watch-btn {
@@ -54,16 +61,21 @@
         background: linear-gradient(45deg, #ff4081, #e91e63);
         color: #fff;
         font-weight: 600;
-        padding: 0.6rem 1.5rem;
-        border-radius: 50px;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
         text-decoration: none;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+        box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
     }
     
     .nav-button:hover, .watch-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(233, 30, 99, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
         color: #fff;
     }
     
@@ -79,12 +91,59 @@
     }
     
     .nav-button i {
-        margin-right: 8px;
+        margin-right: 6px;
+        font-size: 0.8rem;
     }
     
     .nav-button.next i {
         margin-right: 0;
-        margin-left: 8px;
+        margin-left: 6px;
+        font-size: 0.8rem;
+    }
+    
+    /* Hide text on very small screens */
+    @media (max-width: 480px) {
+        .btn-text {
+            display: none;
+        }
+        
+        .nav-button, .watch-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            min-height: 40px;
+            border-radius: 20px;
+        }
+        
+        .nav-button i {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        .nav-button.prev i {
+            margin-right: 0;
+        }
+        
+        .nav-button.next i {
+            margin-left: 0;
+        }
+    }
+    
+    /* Tablet and desktop responsive */
+    @media (min-width: 769px) {
+        .navigation-buttons {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-buttons-row {
+            gap: 15px;
+        }
+        
+        .nav-button, .watch-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
     }
     
     /* Direct link section */
@@ -177,6 +236,25 @@
         border-radius: 8px;
         margin: 15px 0;
     }
+    
+    /* pCloud iframe styling to minimize interface */
+    #pcloud-embed {
+        border: none !important;
+        background-color: #000 !important;
+        overflow: hidden;
+    }
+    
+    /* Hide pCloud branding if possible */
+    #pcloud-embed::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: #000;
+        z-index: 1000;
+    }
 </style>
 {% endblock %}
 
@@ -195,13 +273,25 @@
             <p>There was an error loading the video. Please try again or contact support.</p>
         </div>
         
-        <!-- Show appropriate player based on video type -->
-        {% if 'mega.nz' in streaming_url %}
+        <!-- Show appropriate player based on video source -->
+        {% if video.video_source == 'mega' %}
             <!-- MEGA Embed Player -->
             <iframe id="mega-embed" src="{{ streaming_url }}" 
-                    class="mega-embed" frameborder="0" allowfullscreen></iframe>
+                    class="mega-embed" frameborder="0" allowfullscreen
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        {% elif video.video_source == 'pcloud' %}
+            <!-- pCloud iframe player (minimized interface) -->
+            <iframe id="pcloud-embed" src="{{ streaming_url }}" 
+                    class="mega-embed" frameborder="0" allowfullscreen
+                    style="width:100%; height:600px; border: none; background-color: #000;"
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        {% elif video.video_source == 'gdrive' %}
+            <!-- Google Drive iframe player -->
+            <iframe id="gdrive-embed" src="{{ streaming_url }}" 
+                    class="mega-embed" frameborder="0" allowfullscreen
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
         {% else %}
-            <!-- HTML5 Player -->
+            <!-- Fallback HTML5 Player -->
             <video id="html5-player" controls preload="auto" poster="{{ thumbnail_url }}" class="html5-player">
                 <source src="{{ streaming_url }}" type="video/mp4">
                 Your browser does not support the video tag.
@@ -217,29 +307,33 @@
         </div>
         
         <div class="navigation-buttons">
-            {% if previous_video %}
-                <a href="{% url 'free_video_player' previous_video.id %}" class="nav-button prev">
-                    <i class="fas fa-chevron-left"></i> Previous Video
-                </a>
-            {% else %}
-                <span class="nav-button disabled prev">
-                    <i class="fas fa-chevron-left"></i> Previous Video
-                </span>
-            {% endif %}
-            
-            <a href="{% url 'free_course' %}" class="nav-button">
+            <!-- Mobile-first layout: Main action button first -->
+            <a href="{% url 'free_course' %}" class="nav-button main-action">
                 <i class="fas fa-th-list"></i> All Free Videos
             </a>
             
-            {% if next_video %}
-                <a href="{% url 'free_video_player' next_video.id %}" class="nav-button next">
-                    Next Video <i class="fas fa-chevron-right"></i>
-                </a>
-            {% else %}
-                <span class="nav-button disabled next">
-                    Next Video <i class="fas fa-chevron-right"></i>
-                </span>
-            {% endif %}
+            <!-- Navigation buttons -->
+            <div class="nav-buttons-row">
+                {% if previous_video %}
+                    <a href="{% url 'free_video_player' previous_video.id %}" class="nav-button prev">
+                        <i class="fas fa-chevron-left"></i> <span class="btn-text">Previous</span>
+                    </a>
+                {% else %}
+                    <span class="nav-button disabled prev">
+                        <i class="fas fa-chevron-left"></i> <span class="btn-text">Previous</span>
+                    </span>
+                {% endif %}
+                
+                {% if next_video %}
+                    <a href="{% url 'free_video_player' next_video.id %}" class="nav-button next">
+                        <span class="btn-text">Next</span> <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <span class="nav-button disabled next">
+                        <span class="btn-text">Next</span> <i class="fas fa-chevron-right"></i>
+                    </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -249,83 +343,84 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const videoUrl = "{{ streaming_url|escapejs }}";
+        const videoSource = "{{ video.video_source|escapejs }}";
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
         const html5Player = document.getElementById('html5-player');
         const megaEmbed = document.getElementById('mega-embed');
+        const pcloudEmbed = document.getElementById('pcloud-embed');
+        const gdriveEmbed = document.getElementById('gdrive-embed');
+        
+        console.log('Free video URL:', videoUrl);
+        console.log('Free video source:', videoSource);
         
         // Function to hide loading indicator
         function hideLoading() {
             loadingIndicator.style.display = 'none';
         }
         
-        // Hide loading indicator after a short delay
-        setTimeout(hideLoading, 1000);
-        
         // Function to show error message
         function showError() {
             errorMessage.style.display = 'block';
         }
         
-        // Tab switching functionality
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const target = this.getAttribute('data-target');
+        // Handle iframe loading for all platforms
+        function setupIframeHandlers(iframe, platform) {
+            if (iframe) {
+                iframe.addEventListener('load', function() {
+                    console.log(platform + ' iframe loaded successfully');
+                    hideLoading();
+                });
                 
-                // Remove active class from all tabs and contents
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding content
-                this.classList.add('active');
-                document.getElementById(target).classList.add('active');
-            });
-        });
-        
-        // Handle HTML5 player loading
-        html5Player.addEventListener('loadeddata', function() {
-            hideLoading();
-        });
-        
-        // Handle HTML5 player errors
-        html5Player.addEventListener('error', function(e) {
-            console.error('HTML5 video error:', e);
-            hideLoading();
-            showError();
-            
-            // Switch to Mega embed tab if it's a Mega URL
-            if (videoUrl.includes('mega.nz')) {
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                const megaTab = document.querySelector('[data-target="mega-embed-tab"]');
-                if (megaTab) {
-                    megaTab.classList.add('active');
-                    document.getElementById('mega-embed-tab').classList.add('active');
-                }
-            }
-        });
-        
-        // Set a timeout in case the video never loads
-        setTimeout(function() {
-            if (loadingIndicator.style.display !== 'none') {
-                hideLoading();
-                
-                // If it's a Mega URL, switch to Mega embed tab
-                if (videoUrl.includes('mega.nz')) {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                    const megaTab = document.querySelector('[data-target="mega-embed-tab"]');
-                    if (megaTab) {
-                        megaTab.classList.add('active');
-                        document.getElementById('mega-embed-tab').classList.add('active');
-                    }
-                } else {
+                iframe.addEventListener('error', function(e) {
+                    console.error(platform + ' iframe error:', e);
                     showError();
-                }
+                });
             }
-        }, 5000); // 5 seconds timeout
+        }
+        
+        // Setup handlers based on video source
+        if (videoSource === 'mega' && megaEmbed) {
+            setupIframeHandlers(megaEmbed, 'MEGA');
+        } else if (videoSource === 'pcloud' && pcloudEmbed) {
+            setupIframeHandlers(pcloudEmbed, 'pCloud');
+        } else if (videoSource === 'gdrive' && gdriveEmbed) {
+            setupIframeHandlers(gdriveEmbed, 'Google Drive');
+        } else if (html5Player) {
+            // Handle fallback HTML5 player
+            html5Player.addEventListener('loadeddata', function() {
+                console.log('HTML5 video loaded successfully');
+                hideLoading();
+            });
+            
+            html5Player.addEventListener('error', function(e) {
+                console.error('HTML5 video error:', e);
+                showError();
+            });
+        }
+        
+        // Fallback timeout
+        setTimeout(function() {
+            if (loadingIndicator && loadingIndicator.style.display !== 'none') {
+                console.log('Video loading timeout - hiding loading indicator');
+                hideLoading();
+            }
+        }, 10000); // 10 seconds timeout
     });
+    
+    // Global functions for iframe onload/onerror
+    function hideLoadingIndicator() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+    }
+    
+    function handleVideoError() {
+        const errorMessage = document.getElementById('error-message');
+        if (errorMessage) {
+            errorMessage.style.display = 'block';
+        }
+    }
 </script>
 {% endblock %}

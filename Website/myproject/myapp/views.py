@@ -1545,32 +1545,19 @@ def free_video_player(request, video_id):
             return redirect(f'{reverse("login")}?next={reverse("video_player", kwargs={"video_id": video_id})}')        
         
         try:
-            # Get the video URL based on available fields
-            stream_url = None
+            # Get the video URL using the universal streaming service
+            from .services.mega_service import MegaService
+            mega_service = MegaService()
+            stream_url = mega_service.get_universal_streaming_url(
+                video.mega_file_link, 
+                video.video_source, 
+                request.user
+            )
             
-            # Use mega_file_link for MegaVideo objects
-            if hasattr(video, 'mega_file_link') and video.mega_file_link:
-                mega_link = video.mega_file_link
-                
-                # Convert MEGA file link to embed format
-                if '/file/' in mega_link and '#' in mega_link:
-                    try:
-                        # Extract file ID and key from the MEGA link
-                        file_id = mega_link.split('/file/')[1].split('#')[0]
-                        key = mega_link.split('#')[1]
-                        
-                        # Create the embed URL
-                        stream_url = f"https://mega.nz/embed/{file_id}#{key}"
-                        logger.info(f"Converted MEGA link to embed URL: {stream_url}")
-                    except Exception as e:
-                        # If parsing fails, use the original link
-                        stream_url = mega_link
-                        logger.error(f"Error converting MEGA link to embed URL: {str(e)}")
-                else:
-                    # If not a standard MEGA file link, use as is
-                    stream_url = mega_link
-                    
-                logger.info(f"Using mega_file_link for free video: {stream_url}")
+            # Debug logging
+            logger.info(f"Free video - Original URL: {video.mega_file_link}")
+            logger.info(f"Free video - Video source: {video.video_source}")
+            logger.info(f"Free video player using URL: {stream_url}")
             
             # If no URL is available, raise an exception
             if not stream_url:

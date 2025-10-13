@@ -37,11 +37,12 @@ def mega_video_management(request):
 
 @staff_member_required
 def add_mega_video(request):
-    """Add a new MEGA video"""
+    """Add a new video from MEGA, pCloud, or Google Drive"""
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
         mega_link = request.POST.get('mega_link')
+        video_source = request.POST.get('video_source', 'mega')
         membership_tier = request.POST.get('membership_tier', 'regular')
         thumbnail_url = request.POST.get('thumbnail_url', '')
         
@@ -49,37 +50,44 @@ def add_mega_video(request):
         is_free = membership_tier == 'free'
         
         if not title or not mega_link:
-            messages.error(request, "Title and MEGA link are required.")
+            messages.error(request, "Title and video link are required.")
             return render(request, 'dashboard/add_mega_video.html', {
                 'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES,
                 'title': title,
                 'description': description,
                 'mega_link': mega_link,
+                'video_source': video_source,
                 'membership_tier': membership_tier,
                 'thumbnail_url': thumbnail_url,
                 'is_free': is_free
             })
         
-        # Validate MEGA link
+        # Validate video link based on source
         mega_service = MegaService()
-        if not mega_service.is_file_link(mega_link):
-            messages.error(request, "Invalid MEGA link. Please provide a valid MEGA file link (e.g., https://mega.nz/file/ABC...#XYZ...).")
+        if not MegaService.is_valid_video_link(mega_link, video_source):
+            source_names = {'mega': 'MEGA', 'pcloud': 'pCloud', 'gdrive': 'Google Drive'}
+            source_name = source_names.get(video_source, video_source)
+            messages.error(request, f"Invalid {source_name} link. Please provide a valid {source_name} video link.")
             return render(request, 'dashboard/add_mega_video.html', {
                 'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES,
                 'title': title,
                 'description': description,
                 'mega_link': mega_link,
+                'video_source': video_source,
                 'membership_tier': membership_tier,
                 'thumbnail_url': thumbnail_url,
                 'is_free': is_free
             })
         
-        # Try to extract metadata from MEGA link
+        # Try to create the video
         try:
             # Create the video
             video = MegaVideo.objects.create(
                 title=title,
                 description=description,
+                video_source=video_source,
                 mega_file_link=mega_link,
                 # If membership_tier is 'free', set it to 'regular' but mark as free
                 membership_tier='regular' if membership_tier == 'free' else membership_tier,
@@ -88,64 +96,75 @@ def add_mega_video(request):
             )
             
             # Log the action
+            source_names = {'mega': 'MEGA', 'pcloud': 'pCloud', 'gdrive': 'Google Drive'}
+            source_name = source_names.get(video_source, video_source)
             AuditLog.objects.create(
                 user=request.user,
                 action_type='mega_video_create',
-                action=f"Created MEGA video: {title}",
+                action=f"Created {source_name} video: {title}",
                 ip_address=get_client_ip(request)
             )
             
-            messages.success(request, f"MEGA video '{title}' was successfully added.")
+            messages.success(request, f"Video '{title}' from {source_name} was successfully added.")
             return redirect('mega_video_management')
         except Exception as e:
-            logger.error(f"Error adding MEGA video: {str(e)}")
-            messages.error(request, f"Error adding MEGA video: {str(e)}")
+            logger.error(f"Error adding video: {str(e)}")
+            messages.error(request, f"Error adding video: {str(e)}")
             return render(request, 'dashboard/add_mega_video.html', {
                 'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES,
                 'title': title,
                 'description': description,
                 'mega_link': mega_link,
+                'video_source': video_source,
                 'membership_tier': membership_tier,
                 'thumbnail_url': thumbnail_url,
                 'is_free': is_free
             })
     
     return render(request, 'dashboard/add_mega_video.html', {
-        'membership_tiers': MegaVideo.MEMBERSHIP_TIERS
+        'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+        'video_sources': MegaVideo.VIDEO_SOURCES
     })
 
 @staff_member_required
 def edit_mega_video(request, video_id):
-    """Edit an existing MEGA video"""
+    """Edit an existing video"""
     video = get_object_or_404(MegaVideo, id=video_id)
     
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
         mega_link = request.POST.get('mega_link')
+        video_source = request.POST.get('video_source', video.video_source)
         membership_tier = request.POST.get('membership_tier', 'regular')
         thumbnail_url = request.POST.get('thumbnail_url', '')
         
         if not title or not mega_link:
-            messages.error(request, "Title and MEGA link are required.")
+            messages.error(request, "Title and video link are required.")
             return render(request, 'dashboard/edit_mega_video.html', {
                 'video': video,
-                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS
+                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES
             })
         
-        # Validate MEGA link
+        # Validate video link based on source
         mega_service = MegaService()
-        if not mega_service.is_file_link(mega_link):
-            messages.error(request, "Invalid MEGA link. Please provide a valid MEGA file link.")
+        if not MegaService.is_valid_video_link(mega_link, video_source):
+            source_names = {'mega': 'MEGA', 'pcloud': 'pCloud', 'gdrive': 'Google Drive'}
+            source_name = source_names.get(video_source, video_source)
+            messages.error(request, f"Invalid {source_name} link. Please provide a valid {source_name} video link.")
             return render(request, 'dashboard/edit_mega_video.html', {
                 'video': video,
-                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS
+                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES
             })
         
         try:
             # Update the video
             video.title = title
             video.description = description
+            video.video_source = video_source
             video.mega_file_link = mega_link
             
             # Set is_free based on membership_tier
@@ -158,19 +177,23 @@ def edit_mega_video(request, video_id):
             video.updated_at = timezone.now()
             video.save()
             
-            messages.success(request, f"MEGA video '{title}' was successfully updated.")
+            source_names = {'mega': 'MEGA', 'pcloud': 'pCloud', 'gdrive': 'Google Drive'}
+            source_name = source_names.get(video_source, video_source)
+            messages.success(request, f"{source_name} video '{title}' was successfully updated.")
             return redirect('mega_video_management')
         except Exception as e:
-            logger.error(f"Error updating MEGA video: {str(e)}")
-            messages.error(request, f"Error updating MEGA video: {str(e)}")
+            logger.error(f"Error updating video: {str(e)}")
+            messages.error(request, f"Error updating video: {str(e)}")
             return render(request, 'dashboard/edit_mega_video.html', {
                 'video': video,
-                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS
+                'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+                'video_sources': MegaVideo.VIDEO_SOURCES
             })
     
     return render(request, 'dashboard/edit_mega_video.html', {
         'video': video,
-        'membership_tiers': MegaVideo.MEMBERSHIP_TIERS
+        'membership_tiers': MegaVideo.MEMBERSHIP_TIERS,
+        'video_sources': MegaVideo.VIDEO_SOURCES
     })
 
 @staff_member_required
@@ -191,7 +214,7 @@ def delete_mega_video(request, video_id):
 
 @login_required
 def play_mega_video(request, video_id):
-    """Play a MEGA video with Plyr.js"""
+    """Play a video from MEGA, pCloud, or Google Drive"""
     video = get_object_or_404(MegaVideo, id=video_id)
     
     # Check if user has access to this video based on membership tier
@@ -207,20 +230,22 @@ def play_mega_video(request, video_id):
     elif user_tier == 'vip' and video.membership_tier == 'diamond':
         return HttpResponseForbidden("Your membership tier does not allow access to this video.")
     
-    # Generate secure URL for the video
+    # Generate streaming URL based on video source
     mega_service = MegaService()
-    secure_token = mega_service.generate_secure_url(video.mega_file_link, request.user)
+    streaming_url = mega_service.get_universal_streaming_url(
+        video.mega_file_link, 
+        video.video_source, 
+        request.user
+    )
     
-    # Extract the MEGA file ID and key from the URL
-    file_id = mega_service.extract_mega_id(video.mega_file_link)
-    key = mega_service.extract_mega_key(video.mega_file_link)
+    # Debug logging
+    logger.info(f"Original URL: {video.mega_file_link}")
+    logger.info(f"Video source: {video.video_source}")
+    logger.info(f"Streaming URL: {streaming_url}")
     
-    if not file_id or not key:
-        messages.error(request, "Invalid MEGA link format. Please contact support.")
+    if not streaming_url:
+        messages.error(request, "Unable to generate video streaming URL. Please contact support.")
         return redirect('video_streaming_course')
-    
-    # Construct a direct streaming URL for the MEGA player
-    streaming_url = f"https://mega.nz/embed/{file_id}#{key}"
     
     # Generate watermark data
     watermark_data = {
@@ -233,10 +258,12 @@ def play_mega_video(request, video_id):
     video.save()
     
     # Log video access
+    source_names = {'mega': 'MEGA', 'pcloud': 'pCloud', 'gdrive': 'Google Drive'}
+    source_name = source_names.get(video.video_source, video.video_source)
     AuditLog.objects.create(
         user=request.user,
         action_type='video_access',
-        action=f'Accessed MEGA video: {video.title}',
+        action=f'Accessed {source_name} video: {video.title}',
         ip_address=get_client_ip(request),
         status='success'
     )
@@ -244,6 +271,7 @@ def play_mega_video(request, video_id):
     context = {
         'video': video,
         'streaming_url': streaming_url,
+        'video_source': video.video_source,
         'watermark_data': watermark_data
     }
     

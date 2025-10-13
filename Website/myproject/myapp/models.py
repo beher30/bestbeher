@@ -538,17 +538,30 @@ class AuditLog(models.Model):
         return f"{username} - {self.action_type} - {self.timestamp}"
 
 class MegaVideo(models.Model):
-    """Model for videos hosted on MEGA"""
+    """Model for videos hosted on MEGA, pCloud, or Google Drive"""
     is_free = models.BooleanField(default=False, help_text='Mark as free video for public viewing')
+    
     MEMBERSHIP_TIERS = [
         ('regular', 'Regular'),
         ('vip', 'VIP'),
         ('diamond', 'Diamond'),
     ]
     
+    VIDEO_SOURCES = [
+        ('mega', 'MEGA'),
+        ('pcloud', 'pCloud'),
+        ('gdrive', 'Google Drive'),
+    ]
+    
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    mega_file_link = models.URLField(max_length=500, help_text='MEGA video link')
+    video_source = models.CharField(
+        max_length=20, 
+        choices=VIDEO_SOURCES, 
+        default='mega',
+        help_text='Video hosting platform'
+    )
+    mega_file_link = models.URLField(max_length=500, help_text='Video link (MEGA/pCloud/Google Drive)')
     thumbnail = models.ImageField(
         upload_to='mega_video_thumbnails/',
         null=True,

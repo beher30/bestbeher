@@ -123,9 +123,23 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <iframe id="mega-embed" src="{{ streaming_url }}" 
-                frameborder="0" allowfullscreen style="width:100%; height:600px;"
-                onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        
+        {% if video_source == 'pcloud' %}
+            <!-- pCloud iframe player (minimized interface) -->
+            <iframe id="pcloud-embed" src="{{ streaming_url }}" 
+                    frameborder="0" allowfullscreen style="width:100%; height:600px; border: none; background-color: #000;"
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        {% elif video_source == 'gdrive' %}
+            <!-- Google Drive iframe embed -->
+            <iframe id="gdrive-embed" src="{{ streaming_url }}" 
+                    frameborder="0" allowfullscreen style="width:100%; height:600px;"
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        {% else %}
+            <!-- MEGA iframe embed (default) -->
+            <iframe id="mega-embed" src="{{ streaming_url }}" 
+                    frameborder="0" allowfullscreen style="width:100%; height:600px;"
+                    onerror="handleVideoError()" onload="hideLoadingIndicator()"></iframe>
+        {% endif %}
     </div>
     
     <div class="video-info">
@@ -179,12 +193,36 @@
     
     function hideLoadingIndicator() {
         document.getElementById('loading-indicator').style.display = 'none';
-        // Also hide error message if iframe loaded successfully
+        // Also hide error message if video loaded successfully
         hideErrorMessage();
     }
     
-    // Check if iframe loaded correctly
-    document.getElementById('mega-embed').addEventListener('error', handleVideoError);
+    // Handle video player based on source
+    const videoSource = "{{ video_source|escapejs }}";
+    
+    if (videoSource === 'pcloud') {
+        // pCloud iframe player
+        const pcloudEmbed = document.getElementById('pcloud-embed');
+        if (pcloudEmbed) {
+            console.log('pCloud video URL:', videoStreamingUrl);
+            pcloudEmbed.addEventListener('error', handleVideoError);
+            pcloudEmbed.addEventListener('load', hideLoadingIndicator);
+        }
+    } else if (videoSource === 'gdrive') {
+        // Google Drive iframe
+        const gdriveEmbed = document.getElementById('gdrive-embed');
+        if (gdriveEmbed) {
+            gdriveEmbed.addEventListener('error', handleVideoError);
+            gdriveEmbed.addEventListener('load', hideLoadingIndicator);
+        }
+    } else {
+        // MEGA iframe (default)
+        const megaEmbed = document.getElementById('mega-embed');
+        if (megaEmbed) {
+            megaEmbed.addEventListener('error', handleVideoError);
+            megaEmbed.addEventListener('load', hideLoadingIndicator);
+        }
+    }
     
     // Set up watermark
     const watermarkElement = document.getElementById('watermark');

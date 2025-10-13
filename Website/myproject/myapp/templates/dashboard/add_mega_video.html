@@ -43,9 +43,19 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="mega_link">MEGA Link *</label>
+                            <label for="video_source">Video Source *</label>
+                            <select class="form-control" id="video_source" name="video_source" onchange="updateLinkPlaceholder()">
+                                <option value="mega" {% if video_source == 'mega' or not video_source %}selected{% endif %}>MEGA</option>
+                                <option value="pcloud" {% if video_source == 'pcloud' %}selected{% endif %}>pCloud</option>
+                                <option value="gdrive" {% if video_source == 'gdrive' %}selected{% endif %}>Google Drive</option>
+                            </select>
+                            <small class="form-text text-muted">Select the video hosting platform</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mega_link">Video Link *</label>
                             <input type="url" class="form-control" id="mega_link" name="mega_link" value="{{ mega_link|default:'' }}" required>
-                            <small class="form-text text-muted">Enter a valid MEGA file link (e.g., https://mega.nz/file/ABCDEF#123456)</small>
+                            <small class="form-text text-muted" id="link-help-text">Enter a valid video link</small>
                         </div>
                         
                         <div class="form-group">
@@ -72,4 +82,29 @@
         </div>
     </div>
 </div>
+
+<script>
+function updateLinkPlaceholder() {
+    const videoSource = document.getElementById('video_source').value;
+    const linkInput = document.getElementById('mega_link');
+    const helpText = document.getElementById('link-help-text');
+    
+    if (videoSource === 'mega') {
+        linkInput.placeholder = 'https://mega.nz/file/ABCDEF#123456';
+        helpText.textContent = 'Enter a valid MEGA file link (e.g., https://mega.nz/file/ABCDEF#123456)';
+    } else if (videoSource === 'pcloud') {
+        linkInput.placeholder = 'https://filedn.com/XXXXXX/video.mp4 or https://my.pcloud.com/publink/show?code=XXX';
+        helpText.textContent = 'Enter a pCloud direct link or public share link';
+    } else if (videoSource === 'gdrive') {
+        linkInput.placeholder = 'https://drive.google.com/file/d/XXXXXX/view';
+        helpText.textContent = 'Enter a Google Drive shareable link';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateLinkPlaceholder();
+});
+</script>
+
 {% endblock content %}

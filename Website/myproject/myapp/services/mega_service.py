@@ -232,3 +232,120 @@ class MegaService:
             'position': 'random',  # Can be: top-left, top-right, bottom-left, bottom-right, random
             'opacity': '0.7'
         }
+    
+    # pCloud and Google Drive Support Methods
+    
+    @staticmethod
+    def detect_video_source(url: str) -> str:
+        """Detect video source from URL"""
+        if not url:
+            return None
+            
+        url_lower = url.lower()
+        if 'mega.nz' in url_lower:
+            return 'mega'
+        elif any(domain in url_lower for domain in ['pcloud.com', 'pcloud.link', 'filedn.com', 'p-def.pcloud.com']):
+            return 'pcloud'
+        elif 'drive.google.com' in url_lower or 'googledrive.com' in url_lower:
+            return 'gdrive'
+        return None
+    
+    @staticmethod
+    def is_pcloud_link(url: str) -> bool:
+        """Check if URL is a valid pCloud link"""
+        if not url:
+            return False
+        url_lower = url.lower()
+        # pCloud links can be:
+        # - https://my.pcloud.com/publink/show?code=XXX
+        # - https://u.pcloud.link/publink/show?code=XXX (shortened links)
+        # - https://filedn.com/XXX/file.mp4
+        # - https://p-def.pcloud.com/XXX
+        return any(domain in url_lower for domain in ['pcloud.com', 'pcloud.link', 'filedn.com', 'p-def.pcloud.com'])
+    
+    @staticmethod
+    def is_gdrive_link(url: str) -> bool:
+        """Check if URL is a valid Google Drive link"""
+        if not url:
+            return False
+        return 'drive.google.com' in url.lower() or 'googledrive.com' in url.lower()
+    
+    @staticmethod
+    def is_valid_video_link(url: str, source: str = None) -> bool:
+        """Validate video link based on source"""
+        if not url:
+            return False
+        
+        # Auto-detect source if not provided
+        if source is None:
+            source = MegaService.detect_video_source(url)
+        
+        if source == 'mega':
+            service = MegaService()
+            return service.is_file_link(url)
+        elif source == 'pcloud':
+            return MegaService.is_pcloud_link(url)
+        elif source == 'gdrive':
+            return MegaService.is_gdrive_link(url)
+        
+        return False
+    
+    @staticmethod
+    def convert_gdrive_to_embed(url: str) -> str:
+        """Convert Google Drive URL to embeddable format"""
+        try:
+            # Extract file ID from various Google Drive URL formats
+            if '/file/d/' in url:
+                file_id = url.split('/file/d/')[1].split('/')[0]
+            elif 'id=' in url:
+                parsed_url = urlparse(url)
+                query_params = parse_qs(parsed_url.query)
+                file_id = query_params.get('id', [None])[0]
+            else:
+                # Assume the URL is already in embed format or direct link
+                return url
+            
+            if file_id:
+                # Return embed URL
+                return f"https://drive.google.com/file/d/{file_id}/preview"
+            return url
+        except Exception as e:
+            logger.error(f"Error converting Google Drive URL: {str(e)}")
+            return url
+    
+    @staticmethod
+    def convert_pcloud_to_direct(url: str) -> str:
+        """Convert pCloud share link to direct link if needed"""
+        # If it's already a direct link (filedn.com), return as is
+        if 'filedn.com' in url.lower() or 'p-def.pcloud.com' in url.lower():
+            return url
+        
+        # For pCloud publinks, return as-is for iframe embedding
+        # pCloud publinks work with iframe but not HTML5 video player
+        # The issue is that HTML5 video players need direct file URLs, not web pages
+        return url
+    
+    def get_universal_streaming_url(self, url: str, source: str, user) -> str:
+        """Get streaming URL for any video source (MEGA, pCloud, or Google Drive)"""
+        try:
+            if source == 'mega':
+                # MEGA uses iframe embed
+                file_id = self.extract_mega_id(url)
+                key = self.extract_mega_key(url)
+                if file_id and key:
+                    return f"https://mega.nz/embed/{file_id}#{key}"
+                return url
+            
+            elif source == 'pcloud':
+                # pCloud direct links work with HTML5 video player
+                return MegaService.convert_pcloud_to_direct(url)
+            
+            elif source == 'gdrive':
+                # Google Drive uses iframe embed
+                return MegaService.convert_gdrive_to_embed(url)
+            
+            return url
+            
+        except Exception as e:
+            logger.error(f"Error generating universal streaming URL: {str(e)}")
+            return url
