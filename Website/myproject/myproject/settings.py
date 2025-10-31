@@ -18,6 +18,29 @@ import dj_database_url
 # Load environment variables from .env file
 load_dotenv()
 
+# Patch Django's PostgreSQL backend to allow CockroachDB (reports as PostgreSQL 13.0)
+# CockroachDB is compatible with Django 5.x despite the version number
+try:
+    from django.db.backends.postgresql.base import DatabaseWrapper
+    
+    # Store original method
+    _original_check_database_version_supported = DatabaseWrapper.check_database_version_supported
+    
+    def patched_check_database_version_supported(self):
+        """Override version check for CockroachDB compatibility"""
+        # Get database host from settings
+        db_host = os.getenv('DATABASE_HOST', '')
+        # If connecting to CockroachDB, skip the version check
+        if 'cockroachlabs.cloud' in db_host or 'cockroachlabs.cloud' in str(self.settings_dict.get('HOST', '')):
+            return  # Skip version check for CockroachDB
+        # Otherwise, use original check
+        return _original_check_database_version_supported(self)
+    
+    # Apply the patch
+    DatabaseWrapper.check_database_version_supported = patched_check_database_version_supported
+except ImportError:
+    pass  # If Django isn't available during import, skip
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
