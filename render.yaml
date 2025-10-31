@@ -14,12 +14,12 @@ services:
       # Navigate to Django project directory
       cd Website/myproject
       
-      # Collect static files
+      # Collect static files (no database needed)
       python manage.py collectstatic --noinput --verbosity=0
       
-      # Run migrations
-      python manage.py migrate
-    startCommand: cd Website/myproject && gunicorn myproject.wsgi:application --log-file -
+      # Note: Migrations are NOT run here - database may not be available during build
+      # Migrations will run at the start of the service when database is ready
+    startCommand: cd Website/myproject && python manage.py migrate --noinput && gunicorn myproject.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120 --log-file -
     envVars:
       - key: PYTHON_VERSION
         value: "3.10.12"
@@ -51,17 +51,16 @@ services:
         value: "True"
       - key: SECURE_PROXY_SSL_HEADER
         value: "HTTP_X_FORWARDED_PROTO,https"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: avyevexy_beherbest
-          property: connectionString
-      - key: DATABASE_NAME
-        value: "avyevexy_beherbest"
-      - key: DATABASE_USER
-        value: "avyevexy_id_rsa"
+      # CockroachDB Configuration
+      # IMPORTANT: Set DATABASE_URL manually in Render Dashboard with your CockroachDB connection string
+      # Format: postgresql://beher:<PASSWORD>@border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full
+      # 
+      # Alternative: Use individual variables (set these in Render Dashboard Environment section):
+      # DATABASE_NAME=defaultdb
+      # DATABASE_USER=beher
+      # DATABASE_PASSWORD=<your-password>
+      # DATABASE_HOST=border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud
+      # DATABASE_PORT=26257
 
-databases:
-  - name: avyevexy_beherbest
-    databaseName: avyevexy_beherbest
-    user: avyevexy_id_rsa
-    plan: free
+# Note: Database is external (CockroachDB), so no database service defined here
+# Configure DATABASE_URL in Render Dashboard → Environment → Environment Variables

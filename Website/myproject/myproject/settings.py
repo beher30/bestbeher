@@ -133,32 +133,70 @@ if DEBUG:
         }
     }
 else:
-    # Production: Use PostgreSQL from environment variables
-    # First try DATABASE_URL (provided by Render), then fall back to individual vars
-    if os.getenv('DATABASE_URL'):
+    # Production: Use PostgreSQL/CockroachDB from environment variables
+    # First try DATABASE_URL (provided by Render or manually configured)
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Handle CockroachDB or PostgreSQL connection string
+        # CockroachDB uses sslmode=verify-full, PostgreSQL may use different SSL modes
+        db_config = dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
+        
+        # For CockroachDB, ensure SSL is properly configured
+        # If sslmode is in the URL, it will be handled by dj_database_url
+        # Otherwise, set sslmode for secure connections
+        if 'OPTIONS' not in db_config:
+            db_config['OPTIONS'] = {}
+        
+        # Set sslmode if not already specified
+        if 'sslmode' not in db_config['OPTIONS']:
+            # Check if it's a CockroachDB host (cockroachlabs.cloud)
+            if 'cockroachlabs.cloud' in db_config.get('HOST', ''):
+                db_config['OPTIONS']['sslmode'] = 'verify-full'
+            else:
+                db_config['OPTIONS']['sslmode'] = 'require'
+        
         DATABASES = {
-            'default': dj_database_url.config(
-                default=os.getenv('DATABASE_URL'),
-                conn_max_age=600,
-                conn_health_checks=True,
-                ssl_require=True
-            )
+            'default': db_config
         }
     else:
         # Use individual database environment variables
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.getenv('DATABASE_NAME', 'avyevexy_beherbest'),
-                'USER': os.getenv('DATABASE_USER', 'avyevexy_id_rsa'),
-                'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
-                'HOST': os.getenv('DATABASE_HOST', 'localhost'),
-                'PORT': os.getenv('DATABASE_PORT', '5432'),
-                'OPTIONS': {
-                    'sslmode': 'prefer',
-                },
+        db_name = os.getenv('DATABASE_NAME')
+        db_user = os.getenv('DATABASE_USER')
+        db_password = os.getenv('DATABASE_PASSWORD')
+        db_host = os.getenv('DATABASE_HOST')
+        db_port = os.getenv('DATABASE_PORT', '5432')
+        
+        # Only set up database if we have required credentials
+        if db_name and db_user and db_host:
+            # Determine SSL mode based on host
+            ssl_mode = 'verify-full' if 'cockroachlabs.cloud' in db_host else 'require'
+            
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.postgresql',
+                    'NAME': db_name,
+                    'USER': db_user,
+                    'PASSWORD': db_password or '',
+                    'HOST': db_host,
+                    'PORT': db_port,
+                    'OPTIONS': {
+                        'sslmode': ssl_mode,
+                    },
+                }
             }
-        }
+        else:
+            # Fallback to SQLite if no database config available (for build process)
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': BASE_DIR / 'db.sqlite3',
+                }
+            }
 
 
 # Password validation
