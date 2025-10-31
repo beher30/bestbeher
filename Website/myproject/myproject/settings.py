@@ -18,12 +18,13 @@ import dj_database_url
 # Load environment variables from .env file
 load_dotenv()
 
-# Patch Django's PostgreSQL backend to allow CockroachDB (reports as PostgreSQL 13.0)
-# CockroachDB is compatible with Django 5.x despite the version number
+# Patch Django's PostgreSQL backend for CockroachDB compatibility
+# CockroachDB is compatible with Django 5.x but has some limitations
 try:
     from django.db.backends.postgresql.base import DatabaseWrapper
+    from django.db.backends.postgresql.schema import DatabaseSchemaEditor
     
-    # Store original method
+    # Patch 1: Allow CockroachDB version (reports as PostgreSQL 13.0)
     _original_check_database_version_supported = DatabaseWrapper.check_database_version_supported
     
     def patched_check_database_version_supported(self):
@@ -38,6 +39,85 @@ try:
     
     # Apply the patch
     DatabaseWrapper.check_database_version_supported = patched_check_database_version_supported
+    
+    # Patch 2: Disable deferred foreign keys for CockroachDB
+    # CockroachDB doesn't support DEFERRABLE INITIALLY DEFERRED
+    _original_add_field = DatabaseSchemaEditor.add_field
+    
+    def patched_add_field(self, model, field):
+        """Disable deferred foreign keys for CockroachDB"""
+        # Check if connecting to CockroachDB
+        db_host = os.getenv('DATABASE_HOST', '')
+        is_cockroachdb = 'cockroachlabs.cloud' in db_host or 'cockroachlabs.cloud' in str(self.connection.settings_dict.get('HOST', ''))
+        
+        # Temporarily disable deferred constraints for CockroachDB
+        if is_cockroachdb:
+            original_defer = getattr(self, '_defer_constraints', False)
+            self._defer_constraints = False
+            try:
+                return _original_add_field(self, model, field)
+            finally:
+                self._defer_constraints = original_defer
+        else:
+            return _original_add_field(self, model, field)
+    
+    # Store original methods for constraint creation and SQL execution
+    _original__create_fk_sql = DatabaseSchemaEditor._create_fk_sql
+    _original_execute = DatabaseSchemaEditor.execute
+    
+    def patched__create_fk_sql(self, model, field, suffix):
+        """Remove DEFERRABLE INITIALLY DEFERRED from foreign key constraints for CockroachDB"""
+        sql = _original__create_fk_sql(self, model, field, suffix)
+        
+        # Check if connecting to CockroachDB
+        db_host = os.getenv('DATABASE_HOST', '')
+        is_cockroachdb = 'cockroachlabs.cloud' in db_host or 'cockroachlabs.cloud' in str(self.connection.settings_dict.get('HOST', ''))
+        
+        # Remove DEFERRABLE INITIALLY DEFERRED for CockroachDB
+        if is_cockroachdb:
+            if isinstance(sql, str):
+                sql = sql.replace('DEFERRABLE INITIALLY DEFERRED', '')
+                sql = sql.replace('DEFERRABLE', '')
+                sql = sql.replace(' INITIALLY DEFERRED', '')
+                # Clean up any double spaces
+                sql = ' '.join(sql.split())
+        
+        return sql
+    
+    def patched_execute(self, sql, params=None):
+        """Intercept SQL execution to remove DEFERRABLE for CockroachDB"""
+        # Check if connecting to CockroachDB
+        db_host = os.getenv('DATABASE_HOST', '')
+        is_cockroachdb = 'cockroachlabs.cloud' in db_host or 'cockroachlabs.cloud' in str(self.connection.settings_dict.get('HOST', ''))
+        
+        if is_cockroachdb and sql:
+            # Remove DEFERRABLE from any SQL statement
+            if isinstance(sql, str):
+                sql = sql.replace(' DEFERRABLE INITIALLY DEFERRED', '')
+                sql = sql.replace('DEFERRABLE INITIALLY DEFERRED', '')
+                sql = sql.replace(' DEFERRABLE', '')
+                sql = sql.replace('INITIALLY DEFERRED', '')
+                # Clean up double spaces
+                sql = ' '.join(sql.split())
+            elif isinstance(sql, (list, tuple)):
+                # Handle list/tuple of SQL statements
+                cleaned_sql = []
+                for stmt in sql:
+                    if isinstance(stmt, str):
+                        stmt = stmt.replace(' DEFERRABLE INITIALLY DEFERRED', '')
+                        stmt = stmt.replace('DEFERRABLE INITIALLY DEFERRED', '')
+                        stmt = stmt.replace(' DEFERRABLE', '')
+                        stmt = stmt.replace('INITIALLY DEFERRED', '')
+                        stmt = ' '.join(stmt.split())
+                    cleaned_sql.append(stmt)
+                sql = type(sql)(cleaned_sql)
+        
+        return _original_execute(self, sql, params)
+    
+    DatabaseSchemaEditor.add_field = patched_add_field
+    DatabaseSchemaEditor._create_fk_sql = patched__create_fk_sql
+    DatabaseSchemaEditor.execute = patched_execute
+    
 except ImportError:
     pass  # If Django isn't available during import, skip
 
