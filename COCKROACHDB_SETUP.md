@@ -11,17 +11,21 @@ From your CockroachDB cluster:
 
 ## 🔧 Configuration Options
 
-### **Option 1: Using DATABASE_URL (Recommended)**
+### **Option 1: Using Individual Environment Variables (Recommended - Easier, No URL Encoding Issues)**
 
-Set the `DATABASE_URL` environment variable in Render with your complete connection string:
+Set these environment variables in Render Dashboard. **This is recommended** because it avoids password URL encoding issues:
 
 ```
-postgresql://beher:<YOUR-PASSWORD>@border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full
+DATABASE_NAME=defaultdb
+DATABASE_USER=beher
+DATABASE_PASSWORD=<YOUR-PASSWORD>
+DATABASE_HOST=border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud
+DATABASE_PORT=26257
 ```
 
 **Replace `<YOUR-PASSWORD>` with your actual SQL user password.**
 
-### **Option 2: Using Individual Environment Variables**
+### **Option 2: Using DATABASE_URL (Requires URL Encoding)**
 
 Set these environment variables in Render Dashboard:
 
@@ -45,12 +49,7 @@ DATABASE_PORT=26257
 1. Go to your Render Dashboard → **Web Service** → **Environment**
 2. Add or update these variables:
 
-   **Option A - Single DATABASE_URL (Recommended):**
-   ```
-   DATABASE_URL=postgresql://beher:<YOUR-PASSWORD>@border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full
-   ```
-
-   **Option B - Individual Variables:**
+   **Option A - Individual Variables (Recommended - No URL Encoding Needed):**
    ```
    DATABASE_NAME=defaultdb
    DATABASE_USER=beher
@@ -58,6 +57,13 @@ DATABASE_PORT=26257
    DATABASE_HOST=border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud
    DATABASE_PORT=26257
    ```
+
+   **Option B - Single DATABASE_URL (Requires URL-encoding special characters in password):**
+   ```
+   DATABASE_URL=postgresql://beher:<YOUR-PASSWORD>@border-peacock-9993.jxf.gcp-europe-west1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full
+   ```
+   
+   **⚠️ Important**: If using DATABASE_URL, special characters in password must be URL-encoded. See `PASSWORD_FIX.md` for details.
 
 ### Step 3: Remove Old Database References (if using CockroachDB instead of Render's database)
 

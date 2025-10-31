@@ -152,13 +152,11 @@ else:
         if 'OPTIONS' not in db_config:
             db_config['OPTIONS'] = {}
         
-        # Set sslmode if not already specified
+        # For CockroachDB, use 'require' instead of 'verify-full' to avoid certificate file requirement
+        # 'require' still encrypts the connection but doesn't require the certificate file
+        # This works on Render where certificate files aren't available
         if 'sslmode' not in db_config['OPTIONS']:
-            # Check if it's a CockroachDB host (cockroachlabs.cloud)
-            if 'cockroachlabs.cloud' in db_config.get('HOST', ''):
-                db_config['OPTIONS']['sslmode'] = 'verify-full'
-            else:
-                db_config['OPTIONS']['sslmode'] = 'require'
+            db_config['OPTIONS']['sslmode'] = 'require'
         
         DATABASES = {
             'default': db_config
@@ -173,8 +171,9 @@ else:
         
         # Only set up database if we have required credentials
         if db_name and db_user and db_host:
-            # Determine SSL mode based on host
-            ssl_mode = 'verify-full' if 'cockroachlabs.cloud' in db_host else 'require'
+            # Use 'require' for SSL (encrypts connection without requiring certificate file)
+            # This works for both CockroachDB and PostgreSQL on Render
+            ssl_mode = 'require'
             
             DATABASES = {
                 'default': {
