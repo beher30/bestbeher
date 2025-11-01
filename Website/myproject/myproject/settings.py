@@ -85,7 +85,7 @@ try:
         return sql
     
     def patched_execute(self, sql, params=None):
-        """Intercept SQL execution to remove DEFERRABLE for CockroachDB"""
+        """Intercept SQL execution to remove DEFERRABLE for CockroachDB and handle 'already exists' errors"""
         # Check if connecting to CockroachDB
         db_host = os.getenv('DATABASE_HOST', '')
         is_cockroachdb = 'cockroachlabs.cloud' in db_host or 'cockroachlabs.cloud' in str(self.connection.settings_dict.get('HOST', ''))
@@ -112,7 +112,20 @@ try:
                     cleaned_sql.append(stmt)
                 sql = type(sql)(cleaned_sql)
         
-        return _original_execute(self, sql, params)
+        # Handle "CREATE TABLE" operations that might fail if table already exists
+        # This can happen in CockroachDB when migrations are partially applied
+        try:
+            return _original_execute(self, sql, params)
+        except Exception as e:
+            error_msg = str(e)
+            # If it's an "already exists" error for CREATE TABLE, suppress it
+            # This happens when tables exist but migration tracking is out of sync
+            if 'CREATE TABLE' in str(sql).upper() and 'already exists' in error_msg.lower():
+                # Table already exists, which means migration was partially applied
+                # Return empty result similar to a successful CREATE
+                return None
+            # Re-raise other errors
+            raise
     
     DatabaseSchemaEditor.add_field = patched_add_field
     DatabaseSchemaEditor._create_fk_sql = patched__create_fk_sql
