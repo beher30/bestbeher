@@ -112,16 +112,29 @@ try:
                     cleaned_sql.append(stmt)
                 sql = type(sql)(cleaned_sql)
         
-        # Handle "CREATE TABLE" operations that might fail if table already exists
+        # Handle "CREATE" operations that might fail if object already exists
         # This can happen in CockroachDB when migrations are partially applied
         try:
             return _original_execute(self, sql, params)
         except Exception as e:
             error_msg = str(e)
-            # If it's an "already exists" error for CREATE TABLE, suppress it
-            # This happens when tables exist but migration tracking is out of sync
-            if 'CREATE TABLE' in str(sql).upper() and 'already exists' in error_msg.lower():
-                # Table already exists, which means migration was partially applied
+            error_type = type(e).__name__
+            sql_str = str(sql).upper()
+            
+            # Check if it's a "CREATE" operation and "already exists" error
+            # This happens when objects exist but migration tracking is out of sync
+            is_create_op = any(op in sql_str for op in ['CREATE TABLE', 'CREATE INDEX', 'CREATE UNIQUE INDEX'])
+            
+            # Check for various "already exists" error indicators
+            is_already_exists = (
+                'already exists' in error_msg.lower() or 
+                'duplicatetable' in error_msg.lower() or 
+                'duplicate' in error_type.lower() or
+                'DuplicateTable' in error_type
+            )
+            
+            if is_create_op and is_already_exists:
+                # Object already exists, which means migration was partially applied
                 # Return empty result similar to a successful CREATE
                 return None
             # Re-raise other errors

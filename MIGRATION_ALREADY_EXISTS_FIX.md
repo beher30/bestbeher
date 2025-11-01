@@ -1,8 +1,12 @@
 # 🔧 Migration "Already Exists" Fix for CockroachDB
 
-## ❌ Error
+## ❌ Errors
 ```
+# First error - Tables already exist
 django.db.utils.ProgrammingError: relation "defaultdb.public.auth_permission" already exists
+
+# Second error - Indexes already exist  
+psycopg2.errors.DuplicateTable: index with name "auth_permission_content_type_id_codename_01ab375a_uniq" already exists
 ```
 
 ## 🔍 Why This Happens
@@ -16,15 +20,17 @@ This error occurs when:
 ## ✅ Solution
 
 I've enhanced the patched `execute` method in `settings.py` to:
-1. Catch "already exists" errors during CREATE TABLE operations
-2. Suppress these errors when they occur during table creation
-3. Allow migrations to continue even if tables already exist
-4. Keep other database errors visible
+1. Catch "already exists" errors during CREATE TABLE, CREATE INDEX, and CREATE UNIQUE INDEX operations
+2. Detect various error types including DuplicateTable exceptions
+3. Suppress these errors when they occur during schema creation
+4. Allow migrations to continue even if objects already exist
+5. Keep other database errors visible
 
 ## 🎯 What Changed
 
 The `patched_execute` function now wraps all SQL execution in a try-catch block:
-- If a CREATE TABLE fails with "already exists", it's suppressed
+- If any CREATE operation (TABLE, INDEX, UNIQUE INDEX) fails with "already exists", it's suppressed
+- Detects multiple error formats: error messages, exception types, and DuplicateTable
 - This allows migrations to proceed even with partially applied states
 - Other database errors are still raised normally
 
@@ -85,11 +91,12 @@ After deployment, migrations should run completely:
 
 The patch intercepts ALL SQL execution and:
 1. Removes DEFERRABLE constraints (as before)
-2. Catches "CREATE TABLE ... already exists" errors
-3. Returns None (success) for already-existing tables
-4. Re-raises all other database errors
+2. Catches "CREATE TABLE/INDEX/UNIQUE INDEX ... already exists" errors
+3. Detects DuplicateTable and other "already exists" exception types
+4. Returns None (success) for already-existing objects
+5. Re-raises all other database errors
 
-This ensures migrations can always proceed, even with partially applied states.
+This ensures migrations can always proceed, even with partially applied states where tables or indexes already exist.
 
 ---
 
